@@ -1,3 +1,5 @@
+<!-- File: website/admin.html -->
+<!-- Complete Secure Admin Panel with Serverless Authentication -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twinfolks Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .workflow-step {
             transition: all 0.3s ease;
@@ -31,19 +33,17 @@
             backdrop-filter: blur(8px);
             background: rgba(255, 255, 255, 0.95);
         }
+        .image-preview {
+            max-width: 60px;
+            max-height: 60px;
+            object-fit: cover;
+        }
         .wreath-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .wreath-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .loading-spinner {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -72,8 +72,7 @@
                     id="loginButton"
                     class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
-                    <span id="loginButtonText">Login</span>
-                    <i id="loginSpinner" class="fas fa-spinner loading-spinner ml-2 hidden"></i>
+                    Login
                 </button>
                 
                 <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -105,56 +104,58 @@
 
     <!-- Admin Panel -->
     <div id="adminContainer" class="admin-container">
-        <!-- Loading Status -->
-        <div id="loadingStatus" class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-            <div class="flex items-center">
-                <i class="fas fa-spinner loading-spinner text-blue-600 mr-3"></i>
-                <div>
-                    <p class="text-blue-800 font-medium">Loading current wreaths...</p>
-                    <p class="text-blue-600 text-sm">Please wait while we fetch your latest data</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Workflow Status -->
-        <div id="workflowStatus" class="hidden bg-white border-b">
+        <!-- Workflow Steps -->
+        <div class="bg-white border-b">
             <div class="max-w-7xl mx-auto px-4 py-6">
-                <h2 class="text-lg font-semibold mb-4">Website Management</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Status: Loaded -->
-                    <div id="statusLoaded" class="workflow-step border-2 border-green-500 bg-green-50 rounded-lg p-4">
+                <h2 class="text-lg font-semibold mb-4">Website Update Workflow</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Step 1: Download -->
+                    <div id="step1" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
                         <div class="flex items-center mb-2">
-                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                            <h3 class="font-medium text-green-800">Data Loaded</h3>
+                            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">1</span>
+                            <h3 class="font-medium">Download Current Data</h3>
                         </div>
-                        <p class="text-sm text-green-700 mb-3">Current wreaths loaded and ready for editing</p>
-                        <div class="text-sm text-green-600">
-                            <span id="loadedCount">0</span> wreaths available
+                        <p class="text-sm text-gray-600 mb-3">Get the latest wreaths from your live website</p>
+                        <button id="downloadCurrentBtn" class="w-full bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700">
+                            <i class="fas fa-download mr-1"></i> Download Current
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Load -->
+                    <div id="step2" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">2</span>
+                            <h3 class="font-medium">Load for Editing</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Load the downloaded file to edit wreaths</p>
+                        <button id="loadFileBtn" class="w-full bg-gray-400 text-white py-2 px-3 rounded text-sm" disabled>
+                            <i class="fas fa-upload mr-1"></i> Load File
+                        </button>
+                        <input type="file" id="loadJsonFile" accept=".json" class="hidden">
+                    </div>
+
+                    <!-- Step 3: Edit -->
+                    <div id="step3" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">3</span>
+                            <h3 class="font-medium">Edit Wreaths</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Add, edit, or remove wreaths as needed</p>
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i> Available after loading
                         </div>
                     </div>
 
-                    <!-- Action: Export when changes made -->
-                    <div id="statusExport" class="workflow-step border-2 border-gray-300 rounded-lg p-4">
+                    <!-- Step 4: Export -->
+                    <div id="step4" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
                         <div class="flex items-center mb-2">
-                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">
-                                <i class="fas fa-download"></i>
-                            </span>
-                            <h3 class="font-medium">Export Changes</h3>
+                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">4</span>
+                            <h3 class="font-medium">Export & Update</h3>
                         </div>
-                        <p class="text-sm text-gray-600 mb-3">Download updated data when you make changes</p>
+                        <p class="text-sm text-gray-600 mb-3">Export updated data to update your website</p>
                         <button id="exportJsonBtn" class="w-full bg-gray-400 text-white py-2 px-3 rounded text-sm" disabled>
                             <i class="fas fa-download mr-1"></i> Export JSON
                         </button>
-                    </div>
-                </div>
-                
-                <div id="hasChangesNotice" class="hidden mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
-                        <div>
-                            <p class="text-yellow-800 font-medium">You have unsaved changes</p>
-                            <p class="text-yellow-700 text-sm">Export your data to save changes to your website</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -163,17 +164,17 @@
         <!-- Main Content -->
         <div class="max-w-7xl mx-auto px-4 py-6">
             <!-- Toolbar -->
-            <div id="toolbar" class="hidden bg-white rounded-lg shadow-sm border p-4 mb-6">
+            <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
                 <div class="flex items-center justify-between flex-wrap gap-4">
                     <div class="flex items-center space-x-4">
                         <button id="addWreathBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center space-x-2">
                             <i class="fas fa-plus"></i>
-                            <span>Add New Wreath</span>
+                            <span>Add Wreath</span>
                         </button>
                         
-                        <label class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center space-x-2 cursor-pointer">
-                            <i class="fas fa-file-import"></i>
-                            <span>Import Poshmark JSON</span>
+                        <label class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2 cursor-pointer">
+                            <i class="fas fa-upload"></i>
+                            <span>Import JSON</span>
                             <input type="file" id="importFileInput" accept=".json" class="hidden" multiple>
                         </label>
                     </div>
@@ -185,7 +186,7 @@
                         </label>
                         
                         <div class="text-sm text-gray-600">
-                            <span id="wreathCount">0</span> wreaths total
+                            <span id="wreathCount">0</span> wreaths loaded
                         </div>
                     </div>
                 </div>
@@ -194,9 +195,9 @@
             <!-- Wreaths Grid -->
             <div id="wreathsContainer" class="bg-white rounded-lg shadow-sm border p-6">
                 <div id="emptyState" class="text-center py-12">
-                    <i class="fas fa-spinner loading-spinner text-4xl text-gray-400 mb-4"></i>
-                    <h3 class="text-lg font-medium text-gray-600 mb-2">Loading wreaths...</h3>
-                    <p class="text-gray-500">Please wait while we load your current inventory</p>
+                    <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">No wreaths loaded</h3>
+                    <p class="text-gray-500">Follow the workflow steps above to get started</p>
                 </div>
                 
                 <div id="wreathsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
@@ -220,12 +221,23 @@
                 <form id="wreathForm" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
                             <input type="text" id="editTitle" class="w-full border border-gray-300 rounded px-3 py-2" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Local Price ($)</label>
                             <input type="number" id="editLocalPrice" class="w-full border border-gray-300 rounded px-3 py-2" step="0.01" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Original Price ($)</label>
+                            <input type="number" id="editOriginalPrice" class="w-full border border-gray-300 rounded px-3 py-2" step="0.01" min="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                            <input type="text" id="editBrand" class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
                     </div>
                     
@@ -235,44 +247,15 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Hashtags (comma separated)</label>
-                        <input type="text" id="editHashtags" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="handmade, wreath, decor">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hashtags</label>
+                        <input type="text" id="editHashtags" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="#handmade #wreath #decor">
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="editSold" class="rounded">
-                                <span class="text-sm text-gray-700">Mark as sold</span>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date Added</label>
-                            <input type="date" id="editDateAdded" class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                    </div>
-                    
-                    <!-- Platform URLs -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Poshmark URL</label>
-                            <input type="url" id="editPoshmark" class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Facebook Marketplace URL</label>
-                            <input type="url" id="editFacebook" class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Mercari URL</label>
-                            <input type="url" id="editMercari" class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Other Platform URL</label>
-                            <input type="url" id="editOther" class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
+                    <div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="editSold" class="rounded">
+                            <span class="text-sm text-gray-700">Mark as sold</span>
+                        </label>
                     </div>
                     
                     <!-- Images Section -->
@@ -303,481 +286,7 @@
         </div>
     </div>
 
-    <script>
-        // Admin Panel JavaScript with Auto-Loading
-        class WreathAdminPanel {
-            constructor() {
-                this.wreaths = [];
-                this.hasChanges = false;
-                this.currentEditingId = null;
-                
-                // Admin password - in production, this should be more secure
-                this.adminPassword = 'twinfolks2025';
-                
-                this.init();
-            }
-            
-            init() {
-                this.setupEventListeners();
-                this.checkAuthStatus();
-            }
-            
-            setupEventListeners() {
-                // Login
-                document.getElementById('loginButton').addEventListener('click', () => this.handleLogin());
-                document.getElementById('adminPassword').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        this.handleLogin();
-                    }
-                });
-                
-                // Logout
-                document.getElementById('logoutButton').addEventListener('click', () => this.logout());
-                
-                // Wreath management
-                document.getElementById('addWreathBtn').addEventListener('click', () => this.addNewWreath());
-                document.getElementById('importFileInput').addEventListener('change', (e) => this.handleImport(e));
-                document.getElementById('exportJsonBtn').addEventListener('click', () => this.exportData());
-                document.getElementById('showSoldItems').addEventListener('change', () => this.displayWreaths());
-                
-                // Modal
-                document.getElementById('closeEditModal').addEventListener('click', () => this.closeModal());
-                document.getElementById('cancelEditBtn').addEventListener('click', () => this.closeModal());
-                document.getElementById('saveEditBtn').addEventListener('click', () => this.saveWreath());
-                document.getElementById('deleteWreathBtn').addEventListener('click', () => this.deleteWreath());
-                document.getElementById('addImageBtn').addEventListener('click', () => this.addImage());
-                
-                // Enter key for new image URL
-                document.getElementById('newImageUrl').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        this.addImage();
-                    }
-                });
-                
-                // Close modal when clicking outside
-                document.getElementById('editModal').addEventListener('click', (e) => {
-                    if (e.target === document.getElementById('editModal')) {
-                        this.closeModal();
-                    }
-                });
-            }
-            
-            checkAuthStatus() {
-                const isAuthenticated = localStorage.getItem('twinfolks_admin_login') === 'true';
-                if (isAuthenticated) {
-                    this.showAdminPanel();
-                    this.loadCurrentData();
-                } else {
-                    this.showLoginScreen();
-                }
-            }
-            
-            showLoginScreen() {
-                document.getElementById('loginContainer').style.display = 'flex';
-                document.getElementById('adminContainer').classList.remove('active');
-            }
-            
-            async handleLogin() {
-                const password = document.getElementById('adminPassword').value.trim();
-                const button = document.getElementById('loginButton');
-                const spinner = document.getElementById('loginSpinner');
-                const text = document.getElementById('loginButtonText');
-                const errorDiv = document.getElementById('loginError');
-                
-                // Clear any previous errors
-                errorDiv.classList.add('hidden');
-                
-                if (!password) {
-                    errorDiv.textContent = 'Please enter a password';
-                    errorDiv.classList.remove('hidden');
-                    return;
-                }
-                
-                if (password !== this.adminPassword) {
-                    errorDiv.textContent = 'Incorrect password';
-                    errorDiv.classList.remove('hidden');
-                    document.getElementById('adminPassword').value = '';
-                    return;
-                }
-                
-                // Show loading
-                button.disabled = true;
-                spinner.classList.remove('hidden');
-                text.textContent = 'Logging in...';
-                
-                try {
-                    // Simulate login delay for better UX
-                    await new Promise(resolve => setTimeout(resolve, 800));
-                    
-                    localStorage.setItem('twinfolks_admin_login', 'true');
-                    this.showAdminPanel();
-                    await this.loadCurrentData();
-                } catch (error) {
-                    console.error('Login error:', error);
-                    errorDiv.textContent = 'Login failed. Please try again.';
-                    errorDiv.classList.remove('hidden');
-                } finally {
-                    button.disabled = false;
-                    spinner.classList.add('hidden');
-                    text.textContent = 'Login';
-                }
-            }
-            
-            logout() {
-                localStorage.removeItem('twinfolks_admin_login');
-                this.showLoginScreen();
-                document.getElementById('adminPassword').value = '';
-                
-                // Reset any state
-                this.wreaths = [];
-                this.hasChanges = false;
-                this.currentEditingId = null;
-            }
-            
-            showAdminPanel() {
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('adminContainer').classList.add('active');
-            }
-            
-            async loadCurrentData() {
-                try {
-                    const response = await fetch('wreaths.json');
-                    if (response.ok) {
-                        this.wreaths = await response.json();
-                        this.showDataLoadedState();
-                    } else {
-                        // File doesn't exist, start with empty array
-                        this.wreaths = [];
-                        this.showDataLoadedState(true);
-                    }
-                } catch (error) {
-                    console.error('Error loading wreaths:', error);
-                    this.wreaths = [];
-                    this.showErrorState();
-                }
-            }
-            
-            showDataLoadedState(isEmpty = false) {
-                document.getElementById('loadingStatus').style.display = 'none';
-                document.getElementById('workflowStatus').classList.remove('hidden');
-                document.getElementById('toolbar').classList.remove('hidden');
-                
-                if (isEmpty) {
-                    document.getElementById('loadedCount').textContent = '0';
-                    document.getElementById('emptyState').innerHTML = `
-                        <i class="fas fa-plus-circle text-4xl text-green-400 mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-600 mb-2">Ready to add wreaths</h3>
-                        <p class="text-gray-500">No wreaths found. Click "Add New Wreath" or import from Poshmark to get started.</p>
-                    `;
-                } else {
-                    document.getElementById('loadedCount').textContent = this.wreaths.length;
-                    this.displayWreaths();
-                }
-                
-                this.updateCounts();
-            }
-            
-            showErrorState() {
-                document.getElementById('loadingStatus').innerHTML = `
-                    <div class="bg-red-50 border-l-4 border-red-400 p-4">
-                        <div class="flex items-center">
-                            <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
-                            <div>
-                                <p class="text-red-800 font-medium">Error loading data</p>
-                                <p class="text-red-600 text-sm">Could not load wreaths.json. Starting with empty inventory.</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                setTimeout(() => {
-                    this.wreaths = [];
-                    this.showDataLoadedState(true);
-                }, 3000);
-            }
-            
-            displayWreaths() {
-                const grid = document.getElementById('wreathsGrid');
-                const emptyState = document.getElementById('emptyState');
-                const showSold = document.getElementById('showSoldItems').checked;
-                
-                let filteredWreaths = this.wreaths;
-                if (!showSold) {
-                    filteredWreaths = this.wreaths.filter(w => !w.sold);
-                }
-                
-                if (filteredWreaths.length === 0) {
-                    grid.classList.add('hidden');
-                    emptyState.classList.remove('hidden');
-                    emptyState.innerHTML = `
-                        <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-600 mb-2">No wreaths to display</h3>
-                        <p class="text-gray-500">${showSold ? 'Try adding some wreaths or check "Show sold items"' : 'All wreaths are marked as sold. Check "Show sold items" to see them.'}</p>
-                    `;
-                    return;
-                }
-                
-                emptyState.classList.add('hidden');
-                grid.classList.remove('hidden');
-                
-                grid.innerHTML = filteredWreaths.map(wreath => this.createWreathCard(wreath)).join('');
-            }
-            
-            createWreathCard(wreath) {
-                const firstImage = wreath.images && wreath.images.length > 0 ? wreath.images[0] : '';
-                const soldClass = wreath.sold ? 'opacity-75' : '';
-                const soldBadge = wreath.sold ? '<span class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">SOLD</span>' : '';
-                
-                return `
-                    <div class="wreath-card ${soldClass} bg-white border rounded-lg overflow-hidden relative">
-                        ${soldBadge}
-                        <div class="aspect-square bg-gray-100">
-                            ${firstImage ? `
-                                <img src="${firstImage}" alt="${wreath.title}" 
-                                     class="w-full h-full object-cover"
-                                     onerror="this.style.display='none'">
-                            ` : `
-                                <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                    <i class="fas fa-image text-3xl"></i>
-                                </div>
-                            `}
-                        </div>
-                        <div class="p-4">
-                            <h3 class="font-medium text-sm mb-2 line-clamp-2">${wreath.title}</h3>
-                            <p class="text-lg font-bold text-green-600 mb-2">$${wreath.localPrice || 0}</p>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-gray-500">${wreath.dateAdded || 'No date'}</span>
-                                <button onclick="window.adminPanel.editWreath('${wreath.id}')" 
-                                        class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
-                                    Edit
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            addNewWreath() {
-                const newWreath = {
-                    id: Date.now().toString(),
-                    title: "New Wreath",
-                    localPrice: 0,
-                    sold: false,
-                    hashtags: [],
-                    category: "holiday",
-                    dateAdded: new Date().toISOString().split('T')[0],
-                    description: "",
-                    platforms: {
-                        poshmark: "",
-                        fbMarketplace: "",
-                        mercari: "",
-                        other1: ""
-                    },
-                    images: []
-                };
-                
-                this.wreaths.unshift(newWreath);
-                this.markChanged();
-                this.editWreath(newWreath.id);
-                this.displayWreaths();
-                this.updateCounts();
-            }
-            
-            editWreath(id) {
-                this.currentEditingId = id;
-                const wreath = this.wreaths.find(w => w.id === id);
-                if (!wreath) return;
-                
-                // Populate form
-                document.getElementById('editTitle').value = wreath.title || '';
-                document.getElementById('editLocalPrice').value = wreath.localPrice || '';
-                document.getElementById('editDescription').value = wreath.description || '';
-                document.getElementById('editHashtags').value = wreath.hashtags ? wreath.hashtags.join(', ') : '';
-                document.getElementById('editSold').checked = wreath.sold || false;
-                document.getElementById('editDateAdded').value = wreath.dateAdded || '';
-                document.getElementById('editPoshmark').value = wreath.platforms?.poshmark || '';
-                document.getElementById('editFacebook').value = wreath.platforms?.fbMarketplace || '';
-                document.getElementById('editMercari').value = wreath.platforms?.mercari || '';
-                document.getElementById('editOther').value = wreath.platforms?.other1 || '';
-                
-                this.displayImages(wreath.images || []);
-                document.getElementById('editModal').classList.remove('hidden');
-                document.getElementById('editModal').classList.add('flex');
-            }
-            
-            displayImages(images) {
-                const container = document.getElementById('imagesList');
-                container.innerHTML = images.map((img, index) => `
-                    <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-                        <img src="${img}" alt="Image ${index + 1}" class="w-12 h-12 object-cover rounded">
-                        <input type="url" value="${img}" class="flex-1 text-sm border-none bg-transparent" readonly>
-                        <button type="button" onclick="window.adminPanel.removeImage(${index})" 
-                                class="text-red-600 hover:text-red-800">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `).join('');
-            }
-            
-            addImage() {
-                const url = document.getElementById('newImageUrl').value.trim();
-                if (!url) return;
-                
-                const wreath = this.wreaths.find(w => w.id === this.currentEditingId);
-                if (wreath) {
-                    if (!wreath.images) wreath.images = [];
-                    wreath.images.push(url);
-                    this.displayImages(wreath.images);
-                    document.getElementById('newImageUrl').value = '';
-                }
-            }
-            
-            removeImage(index) {
-                const wreath = this.wreaths.find(w => w.id === this.currentEditingId);
-                if (wreath && wreath.images) {
-                    wreath.images.splice(index, 1);
-                    this.displayImages(wreath.images);
-                }
-            }
-            
-            saveWreath() {
-                const wreath = this.wreaths.find(w => w.id === this.currentEditingId);
-                if (!wreath) return;
-                
-                const title = document.getElementById('editTitle').value.trim();
-                if (!title) {
-                    alert('Please enter a title for the wreath');
-                    return;
-                }
-                
-                // Update wreath data
-                wreath.title = title;
-                wreath.localPrice = parseFloat(document.getElementById('editLocalPrice').value) || 0;
-                wreath.description = document.getElementById('editDescription').value.trim();
-                wreath.hashtags = document.getElementById('editHashtags').value.split(',').map(t => t.trim()).filter(Boolean);
-                wreath.sold = document.getElementById('editSold').checked;
-                wreath.dateAdded = document.getElementById('editDateAdded').value;
-                
-                if (!wreath.platforms) wreath.platforms = {};
-                wreath.platforms.poshmark = document.getElementById('editPoshmark').value.trim();
-                wreath.platforms.fbMarketplace = document.getElementById('editFacebook').value.trim();
-                wreath.platforms.mercari = document.getElementById('editMercari').value.trim();
-                wreath.platforms.other1 = document.getElementById('editOther').value.trim();
-                
-                this.markChanged();
-                this.closeModal();
-                this.displayWreaths();
-                this.updateCounts();
-            }
-            
-            deleteWreath() {
-                if (!confirm('Are you sure you want to delete this wreath?')) return;
-                
-                this.wreaths = this.wreaths.filter(w => w.id !== this.currentEditingId);
-                this.markChanged();
-                this.closeModal();
-                this.displayWreaths();
-                this.updateCounts();
-            }
-            
-            closeModal() {
-                document.getElementById('editModal').classList.add('hidden');
-                document.getElementById('editModal').classList.remove('flex');
-                this.currentEditingId = null;
-            }
-            
-            handleImport(event) {
-                const files = Array.from(event.target.files);
-                files.forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const data = JSON.parse(e.target.result);
-                            const wreath = this.convertPoshmarkToWreath(data);
-                            
-                            // Check for duplicates
-                            const existingIndex = this.wreaths.findIndex(w => w.id === wreath.id);
-                            if (existingIndex >= 0) {
-                                this.wreaths[existingIndex] = wreath;
-                            } else {
-                                this.wreaths.unshift(wreath);
-                            }
-                            
-                            this.markChanged();
-                            this.displayWreaths();
-                            this.updateCounts();
-                        } catch (error) {
-                            alert(`Error importing ${file.name}: ${error.message}`);
-                        }
-                    };
-                    reader.readAsText(file);
-                });
-                event.target.value = '';
-            }
-            
-            convertPoshmarkToWreath(poshmarkData) {
-                const id = poshmarkData.url ? poshmarkData.url.split('-').pop() : Date.now().toString();
-                
-                return {
-                    id: id,
-                    title: poshmarkData.title || "Imported Wreath",
-                    localPrice: 0, // User needs to set this
-                    sold: false,
-                    hashtags: poshmarkData.tags ? poshmarkData.tags.map(tag => tag.toLowerCase().replace(/[^a-z0-9]/g, '')) : [],
-                    category: "holiday",
-                    dateAdded: new Date().toISOString().split('T')[0],
-                    description: poshmarkData.description || "",
-                    platforms: {
-                        poshmark: poshmarkData.url || "",
-                        fbMarketplace: "",
-                        mercari: "",
-                        other1: ""
-                    },
-                    images: poshmarkData.images || []
-                };
-            }
-            
-            markChanged() {
-                this.hasChanges = true;
-                document.getElementById('hasChangesNotice').classList.remove('hidden');
-                document.getElementById('exportJsonBtn').disabled = false;
-                document.getElementById('exportJsonBtn').className = "w-full bg-green-600 text-white py-2 px-3 rounded text-sm hover:bg-green-700";
-                
-                // Update the export status
-                const exportStep = document.getElementById('statusExport');
-                exportStep.className = "workflow-step border-2 border-green-500 bg-green-50 rounded-lg p-4";
-                exportStep.querySelector('span').className = "bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2";
-            }
-            
-            exportData() {
-                const dataStr = JSON.stringify(this.wreaths, null, 2);
-                const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `wreaths-${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                // Reset changes state
-                this.hasChanges = false;
-                document.getElementById('hasChangesNotice').classList.add('hidden');
-            }
-            
-            updateCounts() {
-                document.getElementById('wreathCount').textContent = this.wreaths.length;
-                document.getElementById('loadedCount').textContent = this.wreaths.length;
-            }
-        }
-        
-        // Initialize admin panel when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            window.adminPanel = new WreathAdminPanel();
-        });
-    </script>
+    <!-- CRITICAL: Make sure this loads the correct JavaScript file -->
+    <script src="js/admin-secure.js"></script>
 </body>
 </html>
