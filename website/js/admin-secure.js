@@ -57,6 +57,7 @@ function showAdminPanel() {
     document.getElementById('adminContainer').classList.add('active');
     isAuthenticated = true;
     updateWorkflowSteps();
+    loadCurrentData(); // Auto-load current data on login
 }
 
 // Handle login
@@ -132,6 +133,52 @@ function handleLogout() {
     workflowState = { downloaded: false, loaded: false, edited: false, exported: false };
     
     showLoginScreen();
+}
+
+// Auto-load current data from website
+async function loadCurrentData() {
+    try {
+        // Try to fetch current wreaths.json from multiple possible locations
+        let response;
+        const possiblePaths = ['wreaths.json', 'data/wreaths.json'];
+        
+        for (const path of possiblePaths) {
+            try {
+                response = await fetch(path);
+                if (response.ok) break;
+            } catch (e) {
+                console.log(`Could not fetch from ${path}`);
+            }
+        }
+
+        if (!response || !response.ok) {
+            console.warn('Could not find wreaths.json file - starting with empty data');
+            wreathsData = [];
+            workflowState.loaded = true;
+            updateWorkflowSteps();
+            displayWreaths();
+            updateWreathCount();
+            return;
+        }
+
+        const data = await response.json();
+        wreathsData = data;
+        workflowState.downloaded = true;
+        workflowState.loaded = true;
+        updateWorkflowSteps();
+        displayWreaths();
+        updateWreathCount();
+        
+        console.log(`Auto-loaded ${data.length} wreaths successfully!`);
+        
+    } catch (error) {
+        console.error('Auto-load error:', error);
+        wreathsData = [];
+        workflowState.loaded = true;
+        updateWorkflowSteps();
+        displayWreaths();
+        updateWreathCount();
+    }
 }
 
 // Setup event listeners
@@ -298,7 +345,7 @@ function exportUpdatedData() {
     workflowState.exported = true;
     hasUnsavedChanges = false;
     updateWorkflowSteps();
-    alert('Exported wreaths.json successfully! Upload this file to your website.');
+    alert('Downloaded updated wreaths.json! Replace the old file on your website with this updated version.');
 }
 
 // Handle import files
