@@ -6,9 +6,6 @@ let editingWreath = null;
 let isLoggedIn = false;
 let hasUnsavedChanges = false;
 
-// Admin password - kept secure via Netlify environment variables
-const ADMIN_PASSWORD = 'twinfolks2025';
-
 // Workflow state
 let workflowState = {
     loaded: false,
@@ -72,12 +69,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Check if user is logged in
 function checkLoginStatus() {
-    const savedLogin = localStorage.getItem('twinfolks_admin_login');
-    if (savedLogin === 'true') {
-        showAdminPanel();
-    } else {
-        showLoginScreen();
+    const sessionToken = localStorage.getItem('twinfolks_session');
+    
+    if (sessionToken) {
+        // Check if session is still valid (8 hours)
+        const sessionData = sessionToken.split('_');
+        if (sessionData.length >= 2) {
+            const timestamp = parseInt(sessionData[1]);
+            const sessionAge = Date.now() - timestamp;
+            
+            // Session expires after 8 hours
+            if (sessionAge < 8 * 60 * 60 * 1000) {
+                showAdminPanel();
+                return;
+            }
+        }
+        localStorage.removeItem('twinfolks_session');
     }
+    
+    showLoginScreen();
 }
 
 // Show login screen
@@ -92,7 +102,6 @@ function showAdminPanel() {
     loginContainer.style.display = 'none';
     adminContainer.classList.add('active');
     isLoggedIn = true;
-    localStorage.setItem('twinfolks_admin_login', 'true');
     
     // Auto-load current data
     setTimeout(() => {
@@ -147,7 +156,7 @@ function setupEventListeners() {
 }
 
 // Handle login
-function handleLogin() {
+async function handleLogin() {
     const password = adminPassword.value.trim();
     
     if (!password) {
@@ -160,20 +169,39 @@ function handleLogin() {
     loginButton.disabled = true;
     loginError.classList.add('hidden');
     
-    // Simulate checking password (in production, use your Netlify function)
-    setTimeout(() => {
-        if (password === ADMIN_PASSWORD) {
+    try {
+        const response = await fetch('/.netlify/functions/verify-admin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password: password })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Store session token if provided
+            if (result.sessionToken) {
+                localStorage.setItem('twinfolks_session', result.sessionToken);
+            }
+            
             // Clear password field
             adminPassword.value = '';
+            
+            // Show admin panel
             showAdminPanel();
         } else {
             showLoginError('Invalid password. Please try again.');
         }
-        
+    } catch (error) {
+        console.error('Login error:', error);
+        showLoginError('Login failed. Please check your connection and try again.');
+    } finally {
         // Reset button
         loginButton.innerHTML = 'Login';
         loginButton.disabled = false;
-    }, 1000);
+    }
 }
 
 // Show login error
@@ -190,7 +218,7 @@ function handleLogout() {
         }
     }
     
-    localStorage.removeItem('twinfolks_admin_login');
+    localStorage.removeItem('twinfolks_session');
     showLoginScreen();
     
     // Reset data
