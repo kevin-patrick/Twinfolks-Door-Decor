@@ -1,279 +1,155 @@
-<!-- File: website/admin.html -->
-<!-- Secure Admin Panel with Serverless Authentication -->
+<!-- File: website/admin-debug.html -->
+<!-- Minimal debug version to test login functionality -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twinfolks Admin Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Admin Debug - Twinfolks</title>
     <style>
-        .workflow-step {
-            transition: all 0.3s ease;
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5; 
         }
-        .workflow-step.completed {
-            border-color: #10b981;
-            background-color: #f0fdf4;
+        .container { 
+            max-width: 400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .workflow-step.active {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
+        input, button { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            box-sizing: border-box;
         }
-        .admin-container {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+        button { 
+            background: #007cba; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
         }
-        .admin-container.active {
-            opacity: 1;
-            pointer-events: auto;
+        button:hover { background: #005a87; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin: 10px 0; 
         }
-        .login-container {
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.95);
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin: 10px 0; 
+        }
+        .debug-info {
+            background: #e2e3e5;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Login Screen -->
-    <div id="loginContainer" class="login-container fixed inset-0 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-8 w-96 max-w-md mx-4">
-            <div class="text-center mb-6">
-                <i class="fas fa-lock text-4xl text-blue-600 mb-4"></i>
-                <h2 class="text-2xl font-bold text-gray-800">Admin Access</h2>
-                <p class="text-gray-600 mt-2">Enter password to access admin panel</p>
-            </div>
+<body>
+    <div class="container">
+        <h1>Admin Login Debug</h1>
+        <p>This is a minimal test page to debug the login system.</p>
+        
+        <div id="step1">
+            <h3>Step 1: Test Serverless Function</h3>
+            <button onclick="testFunction()">Test Function Connectivity</button>
+            <div id="functionResult"></div>
+        </div>
+        
+        <div id="step2">
+            <h3>Step 2: Test Login</h3>
+            <input type="password" id="testPassword" placeholder="Enter admin password" value="">
+            <button onclick="testLogin()">Test Login</button>
+            <div id="loginResult"></div>
+        </div>
+        
+        <div id="step3">
+            <h3>Step 3: Environment Check</h3>
+            <p><strong>Current URL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>Function URL:</strong> <span id="functionUrl"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Display current environment info
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('functionUrl').textContent = window.location.origin + '/.netlify/functions/verify-admin';
+        
+        // Test if serverless function exists and responds
+        async function testFunction() {
+            const resultDiv = document.getElementById('functionResult');
+            resultDiv.innerHTML = 'Testing...';
             
-            <div class="space-y-4">
-                <div>
-                    <input 
-                        type="password" 
-                        id="adminPassword" 
-                        placeholder="Admin Password"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        autocomplete="current-password"
-                    >
-                </div>
+            try {
+                const response = await fetch('/.netlify/functions/verify-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: 'intentionally_wrong_password' })
+                });
                 
-                <button 
-                    id="loginButton"
-                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                    Login
-                </button>
+                const data = await response.json();
                 
-                <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-gray-800">Twinfolks Admin Panel</h1>
-                <div class="flex items-center space-x-4">
-                    <div class="text-sm text-gray-600">
-                        <i class="fas fa-user-check text-green-600 mr-1"></i>
-                        Authenticated
-                    </div>
-                    <a href="index.html" target="_blank" class="text-blue-600 hover:text-blue-800">
-                        <i class="fas fa-external-link-alt mr-1"></i> View Site
-                    </a>
-                    <button id="logoutButton" class="text-red-600 hover:text-red-800">
-                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Admin Panel -->
-    <div id="adminContainer" class="admin-container">
-        <!-- Workflow Steps -->
-        <div class="bg-white border-b">
-            <div class="max-w-7xl mx-auto px-4 py-6">
-                <h2 class="text-lg font-semibold mb-4">Website Update Workflow</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <!-- Step 1: Download -->
-                    <div id="step1" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
-                        <div class="flex items-center mb-2">
-                            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">1</span>
-                            <h3 class="font-medium">Download Current Data</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3">Get the latest wreaths from your live website</p>
-                        <button id="downloadCurrentBtn" class="w-full bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700">
-                            <i class="fas fa-download mr-1"></i> Download Current
-                        </button>
-                    </div>
-
-                    <!-- Step 2: Load -->
-                    <div id="step2" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
-                        <div class="flex items-center mb-2">
-                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">2</span>
-                            <h3 class="font-medium">Load for Editing</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3">Load the downloaded file to edit wreaths</p>
-                        <button id="loadFileBtn" class="w-full bg-gray-400 text-white py-2 px-3 rounded text-sm" disabled>
-                            <i class="fas fa-upload mr-1"></i> Load File
-                        </button>
-                        <input type="file" id="loadJsonFile" accept=".json" class="hidden">
-                    </div>
-
-                    <!-- Step 3: Edit -->
-                    <div id="step3" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
-                        <div class="flex items-center mb-2">
-                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">3</span>
-                            <h3 class="font-medium">Edit Wreaths</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3">Add, edit, or remove wreaths as needed</p>
-                        <div class="text-sm text-gray-500">
-                            <i class="fas fa-info-circle mr-1"></i> Available after loading
-                        </div>
-                    </div>
-
-                    <!-- Step 4: Export -->
-                    <div id="step4" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
-                        <div class="flex items-center mb-2">
-                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">4</span>
-                            <h3 class="font-medium">Export & Update</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3">Export updated data to update your website</p>
-                        <button id="exportJsonBtn" class="w-full bg-gray-400 text-white py-2 px-3 rounded text-sm" disabled>
-                            <i class="fas fa-download mr-1"></i> Export JSON
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="max-w-7xl mx-auto px-4 py-6">
-            <!-- Toolbar -->
-            <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
-                <div class="flex items-center justify-between flex-wrap gap-4">
-                    <div class="flex items-center space-x-4">
-                        <button id="addWreathBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center space-x-2">
-                            <i class="fas fa-plus"></i>
-                            <span>Add Wreath</span>
-                        </button>
-                        
-                        <label class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2 cursor-pointer">
-                            <i class="fas fa-upload"></i>
-                            <span>Import JSON</span>
-                            <input type="file" id="importFileInput" accept=".json" class="hidden" multiple>
-                        </label>
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="showSoldItems" class="rounded">
-                            <span class="text-sm text-gray-700">Show sold items</span>
-                        </label>
-                        
-                        <div class="text-sm text-gray-600">
-                            <span id="wreathCount">0</span> wreaths loaded
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Wreaths Grid -->
-            <div id="wreathsContainer" class="bg-white rounded-lg shadow-sm border p-6">
-                <div id="emptyState" class="text-center py-12">
-                    <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
-                    <h3 class="text-lg font-medium text-gray-600 mb-2">No wreaths loaded</h3>
-                    <p class="text-gray-500">Follow the workflow steps above to get started</p>
-                </div>
+                if (data.success === false && data.error === 'Invalid password') {
+                    resultDiv.innerHTML = '<div class="success">✅ Function is working! Got expected "Invalid password" response.</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="error">⚠️ Function responded but with unexpected data:</div><div class="debug-info">' + JSON.stringify(data, null, 2) + '</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">❌ Function failed: ' + error.message + '</div><div class="debug-info">This usually means the serverless function is not deployed or there\'s a CORS issue.</div>';
+            }
+        }
+        
+        // Test actual login
+        async function testLogin() {
+            const password = document.getElementById('testPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            if (!password) {
+                resultDiv.innerHTML = '<div class="error">Please enter a password</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Testing login...';
+            
+            try {
+                const response = await fetch('/.netlify/functions/verify-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: password })
+                });
                 
-                <div id="wreathsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
-                    <!-- Wreaths will be dynamically inserted here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Modal -->
-    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold">Edit Wreath</h3>
-                    <button id="closeEditModal" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
+                const data = await response.json();
                 
-                <form id="wreathForm" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                            <input type="text" id="editTitle" class="w-full border border-gray-300 rounded px-3 py-2" required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Local Price ($)</label>
-                            <input type="number" id="editLocalPrice" class="w-full border border-gray-300 rounded px-3 py-2" step="0.01" min="0">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Original Price ($)</label>
-                            <input type="number" id="editOriginalPrice" class="w-full border border-gray-300 rounded px-3 py-2" step="0.01" min="0">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
-                            <input type="text" id="editBrand" class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea id="editDescription" rows="4" class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Hashtags</label>
-                        <input type="text" id="editHashtags" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="#handmade #wreath #decor">
-                    </div>
-                    
-                    <div>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="editSold" class="rounded">
-                            <span class="text-sm text-gray-700">Mark as sold</span>
-                        </label>
-                    </div>
-                    
-                    <!-- Images Section -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Images</label>
-                        <div id="imagesList" class="space-y-2 mb-4">
-                            <!-- Dynamic image list -->
-                        </div>
-                        <div class="flex space-x-2">
-                            <input type="url" id="newImageUrl" placeholder="Enter image URL" class="flex-1 border border-gray-300 rounded px-3 py-2">
-                            <button type="button" id="addImageBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-                
-                <div class="flex items-center justify-between pt-6 border-t">
-                    <button id="deleteWreathBtn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                        <i class="fas fa-trash mr-1"></i> Delete
-                    </button>
-                    <div class="space-x-2">
-                        <button id="cancelEditBtn" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
-                        <button id="saveEditBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save Changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/admin-secure.js"></script>
+                if (data.success === true) {
+                    resultDiv.innerHTML = '<div class="success">🎉 LOGIN SUCCESS! Password is correct.</div><div class="debug-info">Session token: ' + data.sessionToken + '</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="error">❌ Login failed: ' + (data.error || 'Unknown error') + '</div><div class="debug-info">' + JSON.stringify(data, null, 2) + '</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">❌ Login request failed: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-test function on page load
+        window.onload = function() {
+            setTimeout(testFunction, 1000);
+        };
+    </script>
 </body>
 </html>
