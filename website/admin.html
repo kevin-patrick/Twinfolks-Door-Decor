@@ -1,3 +1,5 @@
+<!-- File: website/admin.html -->
+<!-- Secure Admin Panel with Serverless Authentication -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,258 +7,273 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twinfolks Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+        .workflow-step {
+            transition: all 0.3s ease;
         }
-        
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
+        .workflow-step.completed {
+            border-color: #10b981;
+            background-color: #f0fdf4;
         }
-        
-        .login-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+        .workflow-step.active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
         }
-        
         .admin-container {
-            display: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
-        
         .admin-container.active {
-            display: block;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .login-container {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen">
     <!-- Login Screen -->
-    <div id="loginContainer" class="login-container">
-        <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full mx-4">
-            <h1 class="text-2xl font-bold mb-6 text-center">Twinfolks Admin</h1>
+    <div id="loginContainer" class="login-container fixed inset-0 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-96 max-w-md mx-4">
+            <div class="text-center mb-6">
+                <i class="fas fa-lock text-4xl text-blue-600 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800">Admin Access</h2>
+                <p class="text-gray-600 mt-2">Enter password to access admin panel</p>
+            </div>
+            
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium mb-2">Password</label>
-                    <input
-                        type="password"
-                        id="adminPassword"
-                        class="w-full p-3 border rounded-md"
-                        placeholder="Enter admin password"
-                    />
+                    <input 
+                        type="password" 
+                        id="adminPassword" 
+                        placeholder="Admin Password"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        autocomplete="current-password"
+                    >
                 </div>
-                <button
+                
+                <button 
                     id="loginButton"
-                    class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700"
+                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                     Login
                 </button>
+                
+                <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="adminContainer" class="admin-container">
-        <!-- Header -->
-        <header class="bg-white shadow-sm border-b">
-            <div class="max-w-7xl mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold text-gray-800">Twinfolks Admin Panel</h1>
-                    <div class="flex items-center space-x-4">
-                        <a href="index.html" target="_blank" class="text-blue-600 hover:text-blue-800">
-                            <i class="fas fa-external-link-alt mr-1"></i> View Site
-                        </a>
-                        <button id="logoutButton" class="text-gray-600 hover:text-gray-800">
-                            Logout
-                        </button>
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold text-gray-800">Twinfolks Admin Panel</h1>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-600">
+                        <i class="fas fa-user-check text-green-600 mr-1"></i>
+                        Authenticated
                     </div>
+                    <a href="index.html" target="_blank" class="text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-external-link-alt mr-1"></i> View Site
+                    </a>
+                    <button id="logoutButton" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    </button>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- Toolbar -->
+    <!-- Admin Panel -->
+    <div id="adminContainer" class="admin-container">
+        <!-- Workflow Steps -->
         <div class="bg-white border-b">
-            <div class="max-w-7xl mx-auto px-4 py-3">
-                <div class="flex items-center justify-between flex-wrap gap-4">
-                    <div class="flex items-center space-x-4">
-                        <button
-                            id="addWreathBtn"
-                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center space-x-2"
-                        >
-                            <i class="fas fa-plus"></i>
-                            <span>Add Wreath</span>
-                        </button>
-                        
-                        <label class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2 cursor-pointer">
-                            <i class="fas fa-upload"></i>
-                            <span>Upload JSON</span>
-                            <input
-                                type="file"
-                                id="jsonUpload"
-                                accept=".json"
-                                class="hidden"
-                            />
-                        </label>
-                        
-                        <button
-                            id="downloadDataBtn"
-                            class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center space-x-2"
-                        >
-                            <i class="fas fa-download"></i>
-                            <span>Download Data</span>
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <h2 class="text-lg font-semibold mb-4">Website Update Workflow</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Step 1: Download -->
+                    <div id="step1" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">1</span>
+                            <h3 class="font-medium">Download Current Data</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Get the latest wreaths from your live website</p>
+                        <button id="downloadCurrentBtn" class="w-full bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700">
+                            <i class="fas fa-download mr-1"></i> Download Current
                         </button>
                     </div>
 
-                    <div class="flex items-center space-x-4">
-                        <label class="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="showSoldItems"
-                                checked
-                                class="mr-2"
-                            />
-                            <span class="text-sm">Show Sold Items</span>
-                        </label>
-                        <span id="itemCount" class="text-sm text-gray-500">
-                            0 items
-                        </span>
+                    <!-- Step 2: Load -->
+                    <div id="step2" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">2</span>
+                            <h3 class="font-medium">Load for Editing</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Load the downloaded file to edit wreaths</p>
+                        <button id="loadFileBtn" class="w-full bg-gray-400 text-white py-2 px-3 rounded text-sm" disabled>
+                            <i class="fas fa-upload mr-1"></i> Load File
+                        </button>
+                        <input type="file" id="loadJsonFile" accept=".json" class="hidden">
+                    </div>
+
+                    <!-- Step 3: Edit -->
+                    <div id="step3" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">3</span>
+                            <h3 class="font-medium">Edit Wreaths</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Add, edit, or remove wreaths as needed</p>
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i> Available after loading
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Export -->
+                    <div id="step4" class="workflow-step border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-gray-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">4</span>
+                            <h3 class="font-medium">Export & Update</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Export updated data to update your website</p>
+                        <button id="exportJsonBtn" class="w-full bg-gray-400 text-white py-2 px-3 rounded text-sm" disabled>
+                            <i class="fas fa-download mr-1"></i> Export JSON
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <main class="max-w-7xl mx-auto p-4">
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 w-12">Sold</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Image</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Title</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 w-24">Price</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Platforms</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Hashtags</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 w-32">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="wreathTableBody" class="divide-y divide-gray-200">
-                            <!-- Wreaths will be loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-semibold">Edit Wreath Details</h3>
-                    <button id="closeEditModal" class="text-gray-500">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                
-                <!-- Image Management Section -->
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 class="font-medium mb-3">Images</h4>
-                    <div id="imageGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                        <!-- Images will be loaded here -->
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Toolbar -->
+            <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div class="flex items-center space-x-4">
+                        <button id="addWreathBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center space-x-2">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Wreath</span>
+                        </button>
+                        
+                        <label class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2 cursor-pointer">
+                            <i class="fas fa-upload"></i>
+                            <span>Import JSON</span>
+                            <input type="file" id="importFileInput" accept=".json" class="hidden" multiple>
+                        </label>
                     </div>
                     
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Add Image URL</label>
-                            <div class="flex space-x-2">
-                                <input
-                                    type="url"
-                                    id="newImageUrl"
-                                    placeholder="https://i.imgur.com/example.jpg"
-                                    class="flex-1 p-2 border rounded text-sm"
-                                />
-                                <button
-                                    id="addImageBtn"
-                                    class="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
-                                >
-                                    Add
-                                </button>
-                            </div>
-                        </div>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="showSoldItems" class="rounded">
+                            <span class="text-sm text-gray-700">Show sold items</span>
+                        </label>
                         
-                        <div class="text-xs text-gray-600 bg-blue-50 p-3 rounded">
-                            <strong>📷 How to get image URLs:</strong><br/>
-                            1. <strong>Imgur:</strong> Upload → Right-click image → "Copy image address"<br/>
-                            2. <strong>Cloudinary:</strong> Upload → Copy the provided URL<br/>
-                            3. <strong>Phone photos:</strong> Upload to Imgur first, then copy URL<br/>
-                            <em>⚠️ Don't use Google Photos links - they break often!</em>
+                        <div class="text-sm text-gray-600">
+                            <span id="wreathCount">0</span> wreaths loaded
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Form Fields -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Title</label>
-                        <input type="text" id="editTitle" class="w-full p-2 border rounded" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Local Pickup Price ($)</label>
-                        <input type="number" id="editPrice" class="w-full p-2 border rounded" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-1">Description</label>
-                        <textarea id="editDescription" class="w-full p-2 border rounded h-24"></textarea>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-1">Hashtags (comma separated)</label>
-                        <input type="text" id="editHashtags" class="w-full p-2 border rounded" placeholder="halloween, wreath, handmade" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Poshmark URL</label>
-                        <input type="url" id="editPoshmark" class="w-full p-2 border rounded" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Facebook Marketplace URL</label>
-                        <input type="url" id="editFacebook" class="w-full p-2 border rounded" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Mercari URL</label>
-                        <input type="url" id="editMercari" class="w-full p-2 border rounded" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Other Platform URL</label>
-                        <input type="url" id="editOther" class="w-full p-2 border rounded" />
-                    </div>
+            <!-- Wreaths Grid -->
+            <div id="wreathsContainer" class="bg-white rounded-lg shadow-sm border p-6">
+                <div id="emptyState" class="text-center py-12">
+                    <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">No wreaths loaded</h3>
+                    <p class="text-gray-500">Follow the workflow steps above to get started</p>
                 </div>
-
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button id="cancelEditBtn" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button id="saveEditBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                        Save Changes
-                    </button>
+                
+                <div id="wreathsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+                    <!-- Wreaths will be dynamically inserted here -->
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="js/admin.js"></script>
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Edit Wreath</h3>
+                    <button id="closeEditModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="wreathForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" id="editTitle" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Local Price ($)</label>
+                            <input type="number" id="editLocalPrice" class="w-full border border-gray-300 rounded px-3 py-2" step="0.01" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Original Price ($)</label>
+                            <input type="number" id="editOriginalPrice" class="w-full border border-gray-300 rounded px-3 py-2" step="0.01" min="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                            <input type="text" id="editBrand" class="w-full border border-gray-300 rounded px-3 py-2">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="editDescription" rows="4" class="w-full border border-gray-300 rounded px-3 py-2"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hashtags</label>
+                        <input type="text" id="editHashtags" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="#handmade #wreath #decor">
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="editSold" class="rounded">
+                            <span class="text-sm text-gray-700">Mark as sold</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Images Section -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Images</label>
+                        <div id="imagesList" class="space-y-2 mb-4">
+                            <!-- Dynamic image list -->
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="url" id="newImageUrl" placeholder="Enter image URL" class="flex-1 border border-gray-300 rounded px-3 py-2">
+                            <button type="button" id="addImageBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="flex items-center justify-between pt-6 border-t">
+                    <button id="deleteWreathBtn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                        <i class="fas fa-trash mr-1"></i> Delete
+                    </button>
+                    <div class="space-x-2">
+                        <button id="cancelEditBtn" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+                        <button id="saveEditBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-secure.js"></script>
 </body>
 </html>
