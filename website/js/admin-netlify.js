@@ -21,16 +21,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize Netlify Identity
 function initNetlifyIdentity() {
-    // Check if user is logged in
-    currentUser = netlifyIdentity.currentUser();
+    // Show loading state initially
+    document.getElementById('authLoading').style.display = 'flex';
     
-    if (currentUser) {
-        showAdminPanel();
-        updateUserInfo();
-    } else {
-        // Show login modal
-        netlifyIdentity.open();
-    }
+    // Wait for Netlify Identity to initialize
+    netlifyIdentity.on('init', user => {
+        document.getElementById('authLoading').style.display = 'none';
+        
+        if (user) {
+            currentUser = user;
+            showAdminPanel();
+            updateUserInfo();
+        } else {
+            // Show login modal
+            netlifyIdentity.open();
+        }
+    });
 
     // Handle login events
     netlifyIdentity.on('login', user => {
@@ -43,11 +49,32 @@ function initNetlifyIdentity() {
     netlifyIdentity.on('logout', () => {
         currentUser = null;
         hideAdminPanel();
+        // Show login modal again
+        netlifyIdentity.open();
+    });
+
+    // Handle modal close without login
+    netlifyIdentity.on('close', () => {
+        if (!currentUser) {
+            // User closed modal without logging in
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gray-50">
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold text-gray-800 mb-4">Access Restricted</h1>
+                        <p class="text-gray-600 mb-6">Please log in to access the admin panel.</p>
+                        <button onclick="netlifyIdentity.open()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                            Login
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
     });
 }
 
 // Show admin panel
 function showAdminPanel() {
+    document.getElementById('authLoading').style.display = 'none';
     document.getElementById('adminContainer').classList.add('active');
     updateWorkflowSteps();
 }
@@ -55,6 +82,7 @@ function showAdminPanel() {
 // Hide admin panel
 function hideAdminPanel() {
     document.getElementById('adminContainer').classList.remove('active');
+    document.getElementById('authLoading').style.display = 'flex';
 }
 
 // Update user info display
@@ -122,8 +150,20 @@ function setupEventListeners() {
     });
 }
 
+// Security check - ensure user is logged in before any admin action
+function requireAuth() {
+    if (!currentUser) {
+        alert('Please log in to perform this action.');
+        netlifyIdentity.open();
+        return false;
+    }
+    return true;
+}
+
 // Download current data from live site
 async function downloadCurrentData() {
+    if (!requireAuth()) return;
+    
     const btn = document.getElementById('downloadCurrentBtn');
     const status = document.getElementById('downloadStatus');
     const originalText = btn.innerHTML;
@@ -160,6 +200,8 @@ async function downloadCurrentData() {
 
 // Handle JSON file loading
 function handleJsonLoad(event) {
+    if (!requireAuth()) return;
+    
     const file = event.target.files[0];
     if (!file) return;
 
@@ -199,6 +241,8 @@ function handleJsonLoad(event) {
 
 // Export updated data
 function exportUpdatedData() {
+    if (!requireAuth()) return;
+    
     if (wreathsData.length === 0) return;
 
     const dataStr = JSON.stringify(wreathsData, null, 2);
@@ -404,6 +448,8 @@ function createPlatformIcons(platforms) {
 
 // Toggle sold status
 function toggleSold(wreathId) {
+    if (!requireAuth()) return;
+    
     const wreath = wreathsData.find(w => w.id === wreathId);
     if (wreath) {
         wreath.sold = !wreath.sold;
@@ -415,6 +461,8 @@ function toggleSold(wreathId) {
 
 // Edit wreath
 function editWreath(wreathId) {
+    if (!requireAuth()) return;
+    
     const wreath = wreathsData.find(w => w.id === wreathId);
     if (wreath) {
         editingWreath = { ...wreath };
@@ -425,6 +473,8 @@ function editWreath(wreathId) {
 
 // Add new wreath
 function addNewWreath() {
+    if (!requireAuth()) return;
+    
     editingWreath = {
         id: Date.now().toString(),
         title: "New Wreath",
