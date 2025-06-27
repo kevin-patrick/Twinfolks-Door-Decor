@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twinfolks Wreath Editor (Offline)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Twinfolks Wreath Editor</h1>
+                    <p class="text-gray-600 text-sm">Offline inventory management</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="saveStatus" class="text-sm text-gray-500">Ready</div>
+                    <button id="loadJsonBtn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-upload mr-1"></i> Load JSON
+                    </button>
+                    <button id="exportJsonBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700" disabled>
+                        <i class="fas fa-download mr-1"></i> Export JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Load Instructions (shown when empty) -->
+    <div id="loadInstructions" class="max-w-4xl mx-auto p-8 text-center">
+        <div class="bg-white rounded-lg shadow-sm p-8">
+            <div class="mb-6">
+                <i class="fas fa-file-upload text-6xl text-gray-300 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Your Wreath Editor!</h2>
+                <p class="text-gray-600">Load your wreaths.json file to start editing</p>
+            </div>
+            
+            <div class="space-y-4">
+                <input type="file" id="jsonFileInput" accept=".json" class="hidden">
+                <button onclick="document.getElementById('jsonFileInput').click()" 
+                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium">
+                    <i class="fas fa-upload mr-2"></i> Load wreaths.json File
+                </button>
+                
+                <div class="text-sm text-gray-500 max-w-md mx-auto">
+                    <p class="mb-2"><strong>📁 Where to find your JSON file:</strong></p>
+                    <p>Download it from your live website at: <code class="bg-gray-100 px-2 py-1 rounded">your-site.netlify.app/wreaths.json</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Editor (hidden initially) -->
+    <div id="editorMain" class="hidden">
+        <!-- Toolbar -->
+        <div class="bg-white border-b">
+            <div class="max-w-7xl mx-auto px-4 py-3">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div class="flex items-center space-x-4">
+                        <button id="addWreathBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center space-x-2">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Wreath</span>
+                        </button>
+                        
+                        <button id="importJsonBtn" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 flex items-center space-x-2">
+                            <i class="fas fa-file-import"></i>
+                            <span>Import Poshmark JSON</span>
+                        </button>
+                        
+                        <input type="file" id="importFileInput" accept=".json" multiple class="hidden">
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="showSoldItems" checked class="mr-2">
+                            <span class="text-sm">Show Sold Items</span>
+                        </label>
+                        <span id="itemCount" class="text-sm text-gray-500">0 items</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto p-4">
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 w-12">Sold</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Image</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Title</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 w-24">Price</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Platforms</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900">Hashtags</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 w-32">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wreathTableBody" class="divide-y divide-gray-200">
+                            <!-- Wreaths will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Edit Wreath Details</h3>
+                    <button id="closeEditModal" class="text-gray-500">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Image Management Section -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 class="font-medium mb-3">Images</h4>
+                    <div id="imageGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                        <!-- Images will be loaded here -->
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Add Image URL</label>
+                            <div class="flex space-x-2">
+                                <input type="url" id="newImageUrl" placeholder="https://i.imgur.com/example.jpg" class="flex-1 p-2 border rounded text-sm" />
+                                <button id="addImageBtn" class="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">Add</button>
+                            </div>
+                        </div>
+                        
+                        <div class="text-xs text-gray-600 bg-blue-50 p-3 rounded">
+                            <strong>📷 How to get image URLs:</strong><br/>
+                            1. <strong>Imgur:</strong> Upload → Right-click image → "Copy image address"<br/>
+                            2. <strong>Cloudinary:</strong> Upload → Copy the provided URL<br/>
+                            3. <strong>Phone photos:</strong> Upload to Imgur first, then copy URL<br/>
+                            <em>⚠️ Don't use Google Photos links - they break often!</em>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Title</label>
+                        <input type="text" id="editTitle" class="w-full p-2 border rounded" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Local Pickup Price ($)</label>
+                        <input type="number" id="editPrice" class="w-full p-2 border rounded" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Status</label>
+                        <div class="flex items-center space-x-4 mt-2">
+                            <label class="flex items-center">
+                                <input type="radio" id="editAvailable" name="soldStatus" value="false" class="mr-2" />
+                                <span class="text-green-600 font-medium">Available</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" id="editSold" name="soldStatus" value="true" class="mr-2" />
+                                <span class="text-red-600 font-medium">Sold</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Date Added</label>
+                        <input type="date" id="editDateAdded" class="w-full p-2 border rounded" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Description</label>
+                        <textarea id="editDescription" class="w-full p-2 border rounded h-24"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Hashtags (comma separated)</label>
+                        <input type="text" id="editHashtags" class="w-full p-2 border rounded" placeholder="halloween, wreath, handmade" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Poshmark URL</label>
+                        <input type="url" id="editPoshmark" class="w-full p-2 border rounded" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Facebook Marketplace URL</label>
+                        <input type="url" id="editFacebook" class="w-full p-2 border rounded" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Mercari URL</label>
+                        <input type="url" id="editMercari" class="w-full p-2 border rounded" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Other Platform URL</label>
+                        <input type="url" id="editOther" class="w-full p-2 border rounded" />
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button id="deleteWreathBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        <i class="fas fa-trash mr-1"></i> Delete
+                    </button>
+                    <button id="cancelEditBtn" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button id="saveEditBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let wreathsData = [];
+        let editingWreath = null;
+        let unsavedChanges = false;
+
+        // DOM elements
+        const loadInstructions = document.getElementById('loadInstructions');
+        const editorMain = document.getElementById('editorMain');
+        const jsonFileInput = document.getElementById('jsonFileInput');
+        const loadJsonBtn = document.getElementById('loadJsonBtn');
+        const exportJsonBtn = document.getElementById('exportJsonBtn');
+        const saveStatus = document.getElementById('saveStatus');
+        const wreathTableBody = document.getElementById('wreathTableBody');
+        const showSoldItems = document.getElementById('showSoldItems');
+        const itemCount = document.getElementById('itemCount');
+        
+        // Modal elements
+        const editModal = document.getElementById('editModal');
+        const closeEditModal = document.getElementById('closeEditModal');
+        const imageGrid = document.getElementById('imageGrid');
+        const newImageUrl = document.getElementById('newImageUrl');
+        const addImageBtn = document.getElementById('addImageBtn');
+        
+        // Form elements
+        const editTitle = document.getElementById('editTitle');
+        const editPrice = document.getElementById('editPrice');
+        const editAvailable = document.getElementById('editAvailable');
+        const editSold = document.getElementById('editSold');
+        const editDateAdded = document.getElementById('editDateAdded');
+        const editDescription = document.getElementById('editDescription');
+        const editHashtags = document.getElementById('editHashtags');
+        const editPoshmark = document.getElementById('editPoshmark');
+        const editFacebook = document.getElementById('editFacebook');
+        const editMercari = document.getElementById('editMercari');
+        const editOther = document.getElementById('editOther');
+        
+        const addWreathBtn = document.getElementById('addWreathBtn');
+        const importJsonBtn = document.getElementById('importJsonBtn');
+        const importFileInput = document.getElementById('importFileInput');
+        const deleteWreathBtn = document.getElementById('deleteWreathBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // File loading
+            jsonFileInput.addEventListener('change', handleJsonLoad);
+            loadJsonBtn.addEventListener('click', () => jsonFileInput.click());
+            
+            // Export
+            exportJsonBtn.addEventListener('click', exportWreaths);
+            
+            // Table filters
+            showSoldItems.addEventListener('change', displayWreaths);
+            
+            // Add/Import
+            addWreathBtn.addEventListener('click', addNewWreath);
+            importJsonBtn.addEventListener('click', () => importFileInput.click());
+            importFileInput.addEventListener('change', handleImportFiles);
+            
+            // Modal
+            closeEditModal.addEventListener('click', closeEditModalHandler);
+            cancelEditBtn.addEventListener('click', closeEditModalHandler);
+            saveEditBtn.addEventListener('click', saveEdit);
+            deleteWreathBtn.addEventListener('click', deleteCurrentWreath);
+            addImageBtn.addEventListener('click', addImage);
+            
+            // Add image on Enter
+            newImageUrl.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addImage();
+            });
+            
+            // Close modal when clicking outside
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) closeEditModalHandler();
+            });
+            
+            // Unsaved changes warning
+            window.addEventListener('beforeunload', (e) => {
+                if (unsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        }
+
+        // Handle JSON file loading
+        function handleJsonLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    wreathsData = JSON.parse(e.target.result);
+                    showEditor();
+                    displayWreaths();
+                    updateItemCount();
+                    setSaveStatus('Loaded ' + wreathsData.length + ' wreaths', 'success');
+                } catch (error) {
+                    alert('Error reading JSON file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Show editor interface
+        function showEditor() {
+            loadInstructions.classList.add('hidden');
+            editorMain.classList.remove('hidden');
+            exportJsonBtn.disabled = false;
+        }
+
+        // Display wreaths in table
+        function displayWreaths() {
+            const filteredWreaths = showSoldItems.checked ? 
+                wreathsData : wreathsData.filter(w => !w.sold);
+            
+            wreathTableBody.innerHTML = '';
+            
+            if (filteredWreaths.length === 0) {
+                wreathTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            ${wreathsData.length === 0 ? 'No wreaths loaded.' : 'No items match current filter.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filteredWreaths.forEach(wreath => {
+                const row = createWreathRow(wreath);
+                wreathTableBody.appendChild(row);
+            });
+        }
+
+        // Create table row for wreath
+        function createWreathRow(wreath) {
+            const row = document.createElement('tr');
+            row.className = wreath.sold ? 'bg-gray-50' : '';
+            
+            const imageUrl = wreath.images && wreath.images.length > 0 ? wreath.images[0] : '';
+            const platformIcons = createPlatformIcons(wreath.platforms);
+            const hashtagsDisplay = wreath.hashtags ? wreath.hashtags.slice(0, 3).map(tag => `#${tag}`).join(' ') : '';
+            
+            row.innerHTML = `
+                <td class="px-4 py-3">
+                    <input type="checkbox" ${wreath.sold ? 'checked' : ''} 
+                           onchange="toggleSold('${wreath.id}')" class="rounded">
+                </td>
+                <td class="px-4 py-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded">
+                        ${imageUrl ? `
+                            <img src="${imageUrl}" alt="${wreath.title}" 
+                                 class="w-full h-full object-cover rounded"
+                                 onerror="this.style.display='none'">
+                        ` : ''}
+                    </div>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="font-medium text-sm">${wreath.title}</div>
+                    <div class="text-xs text-gray-500">Added: ${wreath.dateAdded || 'Unknown'}</div>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="text-sm font-medium">$${wreath.localPrice || 0}</span>
+                </td>
+                <td class="px-4 py-3">
+                    ${platformIcons}
+                </td>
+                <td class="px-4 py-3">
+                    <div class="text-xs text-gray-600">${hashtagsDisplay}</div>
+                    ${wreath.hashtags && wreath.hashtags.length > 3 ? 
+                        `<span class="text-xs text-gray-500">+${wreath.hashtags.length - 3}</span>` : ''}
+                </td>
+                <td class="px-4 py-3">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="editWreath('${wreath.id}')" 
+                                class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        // Create platform icons
+        function createPlatformIcons(platforms) {
+            if (!platforms) return '';
+            
+            let icons = '';
+            if (platforms.poshmark) {
+                icons += '<a href="' + platforms.poshmark + '" target="_blank" class="text-pink-600 hover:text-pink-800 mr-1"><i class="fas fa-external-link-alt text-sm"></i></a>';
+            }
+            if (platforms.fbMarketplace) {
+                icons += '<a href="' + platforms.fbMarketplace + '" target="_blank" class="text-blue-600 hover:text-blue-800 mr-1"><i class="fas fa-external-link-alt text-sm"></i></a>';
+            }
+            if (platforms.mercari) {
+                icons += '<a href="' + platforms.mercari + '" target="_blank" class="text-orange-600 hover:text-orange-800 mr-1"><i class="fas fa-external-link-alt text-sm"></i></a>';
+            }
+            if (platforms.other1) {
+                icons += '<a href="' + platforms.other1 + '" target="_blank" class="text-gray-600 hover:text-gray-800 mr-1"><i class="fas fa-external-link-alt text-sm"></i></a>';
+            }
+            
+            return icons;
+        }
+
+        // Toggle sold status
+        function toggleSold(wreathId) {
+            const wreath = wreathsData.find(w => w.id === wreathId);
+            if (wreath) {
+                wreath.sold = !wreath.sold;
+                markUnsavedChanges();
+                displayWreaths();
+                updateItemCount();
+            }
+        }
+
+        // Edit wreath
+        function editWreath(wreathId) {
+            const wreath = wreathsData.find(w => w.id === wreathId);
+            if (wreath) {
+                editingWreath = { ...wreath };
+                populateEditForm();
+                openEditModal();
+            }
+        }
+
+        // Add new wreath
+        function addNewWreath() {
+            editingWreath = {
+                id: Date.now().toString(),
+                title: "New Wreath",
+                localPrice: 0,
+                sold: false,
+                hashtags: [],
+                category: "holiday",
+                dateAdded: new Date().toISOString().split('T')[0],
+                description: "",
+                platforms: {
+                    poshmark: "",
+                    fbMarketplace: "",
+                    mercari: "",
+                    other1: ""
+                },
+                images: []
+            };
+            populateEditForm();
+            openEditModal();
+        }
+
+        // Handle import files
+        function handleImportFiles(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        const wreath = convertPoshmarkToWreath(data);
+                        
+                        // Check for duplicates
+                        const existingIndex = wreathsData.findIndex(w => w.id === wreath.id);
+                        if (existingIndex >= 0) {
+                            wreathsData[existingIndex] = wreath;
+                        } else {
+                            wreathsData.unshift(wreath);
+                        }
+                        
+                        markUnsavedChanges();
+                        displayWreaths();
+                        updateItemCount();
+                        setSaveStatus(`Imported ${file.name}`, 'success');
+                    } catch (error) {
+                        alert(`Error importing ${file.name}: ${error.message}`);
+                    }
+                };
+                reader.readAsText(file);
+            });
+            
+            event.target.value = '';
+        }
+
+        // Convert Poshmark JSON to wreath format
+        function convertPoshmarkToWreath(poshmarkData) {
+            const id = poshmarkData.url ? poshmarkData.url.split('-').pop() : Date.now().toString() + Math.random().toString(36).substr(2, 9);
+            
+            return {
+                id: id,
+                title: poshmarkData.title || "Imported Wreath",
+                localPrice: 0,
+                sold: false,
+                hashtags: poshmarkData.tags ? poshmarkData.tags.map(tag => tag.toLowerCase().replace(/[^a-z0-9]/g, '')) : [],
+                category: "holiday",
+                dateAdded: new Date().toISOString().split('T')[0],
+                description: poshmarkData.description || "",
+                platforms: {
+                    poshmark: poshmarkData.url || "",
+                    fbMarketplace: "",
+                    mercari: "",
+                    other1: ""
+                },
+                images: poshmarkData.images || []
+            };
+        }
+
+        // Populate edit form
+        function populateEditForm() {
+            editTitle.value = editingWreath.title || '';
+            editPrice.value = editingWreath.localPrice || 0;
+            
+            // Set sold status radio buttons
+            if (editingWreath.sold) {
+                editSold.checked = true;
+            } else {
+                editAvailable.checked = true;
+            }
+            
+            editDateAdded.value = editingWreath.dateAdded || new Date().toISOString().split('T')[0];
+            editDescription.value = editingWreath.description || '';
+            editHashtags.value = editingWreath.hashtags ? editingWreath.hashtags.join(', ') : '';
+            editPoshmark.value = editingWreath.platforms?.poshmark || '';
+            editFacebook.value = editingWreath.platforms?.fbMarketplace || '';
+            editMercari.value = editingWreath.platforms?.mercari || '';
+            editOther.value = editingWreath.platforms?.other1 || '';
+            
+            displayEditImages();
+        }
+
+        // Display images in edit form
+        function displayEditImages() {
+            imageGrid.innerHTML = '';
+            
+            if (editingWreath.images) {
+                editingWreath.images.forEach((img, index) => {
+                    const imageDiv = document.createElement('div');
+                    imageDiv.className = 'relative';
+                    imageDiv.innerHTML = `
+                        <img src="${img}" alt="Image ${index + 1}" 
+                             class="w-full h-24 object-cover rounded border"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-full h-24 bg-gray-200 rounded border hidden items-center justify-center text-xs text-gray-500">
+                            Image not found
+                        </div>
+                        <button onclick="removeImage(${index})" 
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600">
+                            ×
+                        </button>
+                    `;
+                    imageGrid.appendChild(imageDiv);
+                });
+            }
+            
+            // Add "Add Image" placeholder
+            const addDiv = document.createElement('div');
+            addDiv.className = 'border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-24';
+            addDiv.innerHTML = `
+                <i class="fas fa-plus text-gray-400 mb-1"></i>
+                <span class="text-xs text-gray-500">Add Image</span>
+            `;
+            imageGrid.appendChild(addDiv);
+        }
+
+        // Remove image
+        function removeImage(index) {
+            if (editingWreath.images) {
+                editingWreath.images.splice(index, 1);
+                displayEditImages();
+            }
+        }
+
+        // Add image
+        function addImage() {
+            const url = newImageUrl.value.trim();
+            if (url) {
+                if (!editingWreath.images) {
+                    editingWreath.images = [];
+                }
+                editingWreath.images.push(url);
+                newImageUrl.value = '';
+                displayEditImages();
+            }
+        }
+
+        // Open edit modal
+        function openEditModal() {
+            editModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close edit modal
+        function closeEditModalHandler() {
+            editModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            editingWreath = null;
+        }
+
+        // Save edit
+        function saveEdit() {
+            if (!editingWreath) return;
+            
+            // Update wreath data
+            editingWreath.title = editTitle.value.trim();
+            editingWreath.localPrice = parseInt(editPrice.value) || 0;
+            editingWreath.sold = editSold.checked;
+            editingWreath.dateAdded = editDateAdded.value;
+            editingWreath.description = editDescription.value.trim();
+            editingWreath.hashtags = editHashtags.value.split(',').map(t => t.trim()).filter(Boolean);
+            editingWreath.platforms = {
+                poshmark: editPoshmark.value.trim(),
+                fbMarketplace: editFacebook.value.trim(),
+                mercari: editMercari.value.trim(),
+                other1: editOther.value.trim()
+            };
+            
+            // Find and update or add wreath
+            const existingIndex = wreathsData.findIndex(w => w.id === editingWreath.id);
+            if (existingIndex >= 0) {
+                wreathsData[existingIndex] = editingWreath;
+            } else {
+                wreathsData.unshift(editingWreath);
+            }
+            
+            markUnsavedChanges();
+            displayWreaths();
+            updateItemCount();
+            closeEditModalHandler();
+            setSaveStatus('Changes saved to memory', 'success');
+        }
+
+        // Delete current wreath
+        function deleteCurrentWreath() {
+            if (!editingWreath) return;
+            
+            if (confirm(`Are you sure you want to delete "${editingWreath.title}"?`)) {
+                wreathsData = wreathsData.filter(w => w.id !== editingWreath.id);
+                markUnsavedChanges();
+                displayWreaths();
+                updateItemCount();
+                closeEditModalHandler();
+                setSaveStatus('Wreath deleted', 'success');
+            }
+        }
+
+        // Export wreaths
+        function exportWreaths() {
+            const dataStr = JSON.stringify(wreathsData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'wreaths.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            unsavedChanges = false;
+            setSaveStatus('Exported wreaths.json', 'success');
+        }
+
+        // Update item count
+        function updateItemCount() {
+            const filteredWreaths = showSoldItems.checked ? 
+                wreathsData : wreathsData.filter(w => !w.sold);
+            
+            const count = filteredWreaths.length;
+            itemCount.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+        }
+
+        // Mark unsaved changes
+        function markUnsavedChanges() {
+            unsavedChanges = true;
+            setSaveStatus('Unsaved changes', 'warning');
+        }
+
+        // Set save status
+        function setSaveStatus(message, type) {
+            saveStatus.textContent = message;
+            saveStatus.className = `text-sm ${
+                type === 'success' ? 'text-green-600' :
+                type === 'warning' ? 'text-yellow-600' :
+                type === 'error' ? 'text-red-600' :
+                'text-gray-500'
+            }`;
+        }
+
+        // Make functions global for onclick handlers
+        window.toggleSold = toggleSold;
+        window.editWreath = editWreath;
+        window.removeImage = removeImage;
+    </script>
+</body>
+</html>
