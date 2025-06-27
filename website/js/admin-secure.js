@@ -1,5 +1,5 @@
 // File: website/js/admin-secure.js
-// Secure admin panel with serverless function authentication
+// Complete secure admin panel with serverless function authentication
 
 let wreathsData = [];
 let editingWreath = null;
@@ -367,7 +367,7 @@ function displayWreaths() {
     container.classList.remove('hidden');
     
     container.innerHTML = filteredWreaths.map(wreath => `
-        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ${wreath.sold ? 'opacity-60' : ''}">
+        <div class="wreath-card border border-gray-200 rounded-lg p-4 ${wreath.sold ? 'opacity-60' : ''}">
             <div class="aspect-square bg-gray-100 rounded-lg mb-3 overflow-hidden">
                 ${wreath.images && wreath.images.length > 0 
                     ? `<img src="${wreath.images[0]}" alt="${wreath.title}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzlmYTZiNyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='">`
