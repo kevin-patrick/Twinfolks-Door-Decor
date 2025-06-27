@@ -1,0 +1,335 @@
+/*
+ * File: /css/filters.css
+ * Purpose: Styling for the advanced filtering interface
+ */
+
+/* Filter Container */
+.filter-container {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.filter-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.filter-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Search Input */
+.search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.search-input:focus {
+    outline: 0;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+/* Sort Dropdown */
+.sort-dropdown {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.sort-dropdown:focus {
+    outline: 0;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+/* Filter Options Container */
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Custom Checkbox Styling */
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    position: relative;
+    padding-left: 25px;
+    margin: 0;
+    user-select: none;
+}
+
+.filter-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.filter-checkbox .checkmark {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 18px;
+    width: 18px;
+    background-color: #fff;
+    border: 2px solid #ced4da;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+
+.filter-checkbox:hover .checkmark {
+    border-color: #007bff;
+}
+
+.filter-checkbox input:checked ~ .checkmark {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.filter-checkbox .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.filter-checkbox input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Custom Radio Button Styling */
+.filter-radio {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    position: relative;
+    padding-left: 25px;
+    margin: 0;
+    user-select: none;
+}
+
+.filter-radio input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.filter-radio .radio-mark {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 18px;
+    width: 18px;
+    background-color: #fff;
+    border: 2px solid #ced4da;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.filter-radio:hover .radio-mark {
+    border-color: #007bff;
+}
+
+.filter-radio input:checked ~ .radio-mark {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.filter-radio .radio-mark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    top: 4px;
+    left: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+}
+
+.filter-radio input:checked ~ .radio-mark:after {
+    display: block;
+}
+
+/* Filter Stats */
+.filter-stats {
+    background: #e9ecef;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #495057;
+}
+
+.filter-stats strong {
+    color: #007bff;
+}
+
+/* Clear Filters Button */
+.clear-filters-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+}
+
+.clear-filters-btn:hover {
+    background: #5a6268;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .filter-container {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .filter-section {
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+    }
+    
+    .filter-section h4 {
+        font-size: 15px;
+    }
+    
+    .filter-options {
+        gap: 6px;
+    }
+    
+    .filter-checkbox,
+    .filter-radio {
+        font-size: 13px;
+    }
+}
+
+/* Collapsible Filter Sections (for mobile) */
+@media (max-width: 576px) {
+    .filter-section.category-section {
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+    
+    .filter-section.category-section h4 {
+        cursor: pointer;
+        position: relative;
+        padding-right: 20px;
+    }
+    
+    .filter-section.category-section h4:after {
+        content: "▼";
+        position: absolute;
+        right: 0;
+        top: 0;
+        font-size: 12px;
+        transition: transform 0.2s;
+    }
+    
+    .filter-section.category-section.collapsed h4:after {
+        transform: rotate(-90deg);
+    }
+    
+    .filter-section.category-section.collapsed .filter-options {
+        display: none;
+    }
+}
+
+/* Loading State */
+.filter-container.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.filter-container.loading:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Filter Toggle Button (for sidebar implementation) */
+.filter-toggle-btn {
+    display: none;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.filter-toggle-btn:hover {
+    background: #0056b3;
+}
+
+@media (max-width: 768px) {
+    .filter-toggle-btn {
+        display: block;
+    }
+    
+    .filter-container.mobile-hidden {
+        display: none;
+    }
+}

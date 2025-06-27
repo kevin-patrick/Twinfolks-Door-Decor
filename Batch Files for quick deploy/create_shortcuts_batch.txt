@@ -1,0 +1,61 @@
+@echo off
+REM File: create-shortcuts.bat
+REM Creates desktop shortcuts for easy access
+REM Run this after setup to create user-friendly shortcuts
+
+title Creating Desktop Shortcuts
+
+echo.
+echo ============================================
+echo       CREATING DESKTOP SHORTCUTS
+echo ============================================
+echo.
+
+REM Get current directory
+set "CURRENT_DIR=%cd%"
+
+REM Create shortcut for quick deploy
+echo [1/2] Creating "Update Wreaths Website" shortcut...
+
+REM Use PowerShell to create shortcut
+powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%USERPROFILE%\Desktop\Update Wreaths Website.lnk'); $Shortcut.TargetPath = '%CURRENT_DIR%\quick-deploy.bat'; $Shortcut.WorkingDirectory = '%CURRENT_DIR%'; $Shortcut.IconLocation = 'shell32.dll,13'; $Shortcut.Description = 'Update Twinfolks website with new wreaths data'; $Shortcut.Save()"
+
+if %errorlevel% equ 0 (
+    echo ✅ Created "Update Wreaths Website" on desktop
+) else (
+    echo ❌ Failed to create shortcut
+)
+
+echo.
+echo [2/2] Creating "Full Deploy (Advanced)" shortcut...
+
+REM Create shortcut for full deploy
+powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%USERPROFILE%\Desktop\Full Deploy (Advanced).lnk'); $Shortcut.TargetPath = '%CURRENT_DIR%\deploy-website.bat'; $Shortcut.WorkingDirectory = '%CURRENT_DIR%'; $Shortcut.IconLocation = 'shell32.dll,14'; $Shortcut.Description = 'Full deployment with detailed messages'; $Shortcut.Save()"
+
+if %errorlevel% equ 0 (
+    echo ✅ Created "Full Deploy (Advanced)" on desktop
+) else (
+    echo ❌ Failed to create advanced shortcut
+)
+
+echo.
+echo ============================================
+echo           SHORTCUTS CREATED! 🎉
+echo ============================================
+echo.
+echo Desktop shortcuts created:
+echo.
+echo 💎 "Update Wreaths Website"
+echo    ↳ Simple daily deployment (quick-deploy.bat)
+echo    ↳ Perfect for your wife's daily use
+echo.
+echo ⚙️  "Full Deploy (Advanced)"
+echo    ↳ Detailed deployment with messages
+echo    ↳ Good for troubleshooting
+echo.
+echo DAILY WORKFLOW:
+echo 1. Download wreaths.json from admin panel
+echo 2. Double-click "Update Wreaths Website" on desktop
+echo 3. Done! ✨
+echo.
+pause

@@ -1,0 +1,107 @@
+@echo off
+REM File: deploy-website.bat
+REM Main deployment script for Twinfolks website
+REM Place this in your website folder alongside wreaths.json
+
+color 0B
+title Twinfolks Website Deployment
+
+echo.
+echo ============================================
+echo       TWINFOLKS WEBSITE DEPLOYMENT
+echo ============================================
+echo.
+
+REM Check if we're in the right directory
+if not exist "admin.html" (
+    echo ❌ ERROR: admin.html not found!
+    echo Please run this script from your website folder.
+    echo Current folder: %cd%
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Check for wreaths.json
+echo [1/4] Checking for wreaths.json...
+if not exist "wreaths.json" (
+    echo.
+    echo ❌ ERROR: wreaths.json not found!
+    echo.
+    echo Please download the updated wreaths.json from your admin panel first.
+    echo Save it to this folder: %cd%
+    echo.
+    echo Steps:
+    echo 1. Open your admin panel
+    echo 2. Click 'Export wreaths.json'
+    echo 3. Save the file to this folder
+    echo 4. Run this script again
+    echo.
+    pause
+    exit /b 1
+) else (
+    echo ✅ wreaths.json found!
+)
+
+REM Check if Netlify CLI is available
+echo.
+echo [2/4] Checking Netlify CLI...
+netlify --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ❌ ERROR: Netlify CLI not found!
+    echo Please run 'setup-netlify.bat' first.
+    echo.
+    pause
+    exit /b 1
+) else (
+    echo ✅ Netlify CLI ready!
+)
+
+REM Get file timestamp for logging
+for %%F in ("wreaths.json") do set "filedate=%%~tF"
+echo Last modified: %filedate%
+
+echo.
+echo [3/4] Deploying to Netlify...
+echo This may take 1-2 minutes...
+echo.
+
+REM Deploy to production
+netlify deploy --prod --dir=. --message="Updated wreaths database"
+
+if %errorlevel% equ 0 (
+    echo.
+    echo ============================================
+    echo          🎉 SUCCESS! 🎉
+    echo ============================================
+    echo.
+    echo ✅ Your website has been updated!
+    echo ✅ New wreaths data is now live
+    echo ✅ Customers can see the latest inventory
+    echo.
+    echo Your site should be live in 1-2 minutes.
+    echo.
+) else (
+    echo.
+    echo ============================================
+    echo          ❌ DEPLOYMENT FAILED ❌
+    echo ============================================
+    echo.
+    echo Possible issues:
+    echo - No internet connection
+    echo - Netlify service temporarily down
+    echo - Need to run 'setup-netlify.bat' again
+    echo.
+    echo Try again in a few minutes, or check:
+    echo https://www.netlifystatus.com/
+    echo.
+)
+
+echo [4/4] Deployment process complete.
+echo.
+
+REM Show current time
+echo Completed at: %date% %time%
+echo.
+echo Press any key to close...
+pause >nul

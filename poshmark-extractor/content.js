@@ -1,9 +1,18 @@
-// Poshmark Listing Extractor - Content Script
+// Poshmark Listing Extractor - Content Script (Fixed)
 console.log('Poshmark content script loaded');
+
+// Check if we're on a valid Poshmark listing page
+function isValidPoshmarkPage() {
+  return window.location.href.includes('poshmark.com/listing/');
+}
 
 // Main extraction function
 function extractListingData() {
   console.log('Starting data extraction...');
+  
+  if (!isValidPoshmarkPage()) {
+    throw new Error('Not a valid Poshmark listing page');
+  }
   
   try {
     const data = {
@@ -34,31 +43,27 @@ function extractListingData() {
 // Extract title
 function extractTitle() {
   const selectors = [
-    '[data-testid="listing-title"]',
-    '[data-test-id="listing-title"]',
     'h1[data-testid*="title"]',
     'h1[class*="title"]',
+    '[data-testid="listing-title"]',
     '.listing-title',
     '.product-title',
     'h1',
-    '[class*="Title"]'
+    '.item-title'
   ];
   
-  return getTextBySelectors(selectors);
+  return getTextBySelectors(selectors) || 'Unknown Title';
 }
 
 // Extract price
 function extractPrice() {
   const selectors = [
-    '[data-testid="listing-price"]',
-    '[data-test-id="listing-price"]',
     '[data-testid*="price"]',
-    '[data-test-id*="price"]',
     '.price',
     '.listing-price',
     '.current-price',
-    '[class*="price"]',
-    '[class*="Price"]'
+    '[class*="price"]:not([class*="original"])',
+    '.item-price'
   ];
   
   let price = getTextBySelectors(selectors);
@@ -67,7 +72,7 @@ function extractPrice() {
     price = price.replace(/[$,\s]/g, '').trim();
     // Extract just the number
     const priceMatch = price.match(/(\d+(?:\.\d{2})?)/);
-    return priceMatch ? priceMatch[1] : price;
+    return priceMatch ? priceMatch[1] : null;
   }
   return null;
 }
@@ -75,8 +80,6 @@ function extractPrice() {
 // Extract original price
 function extractOriginalPrice() {
   const selectors = [
-    '[data-testid="original-price"]',
-    '[data-test-id="original-price"]',
     '.original-price',
     '.was-price',
     '.crossed-out',
@@ -89,7 +92,7 @@ function extractOriginalPrice() {
   if (price) {
     price = price.replace(/[$,\s]/g, '').trim();
     const priceMatch = price.match(/(\d+(?:\.\d{2})?)/);
-    return priceMatch ? priceMatch[1] : price;
+    return priceMatch ? priceMatch[1] : null;
   }
   return null;
 }
@@ -97,30 +100,24 @@ function extractOriginalPrice() {
 // Extract brand
 function extractBrand() {
   const selectors = [
-    '[data-testid="listing-brand"]',
-    '[data-test-id="listing-brand"]',
     '[data-testid*="brand"]',
-    '[data-test-id*="brand"]',
     '.brand',
     '.brand-name',
     '.listing-brand',
-    '[class*="brand"]',
-    '[class*="Brand"]'
+    '[class*="brand"]'
   ];
   
-  return getTextBySelectors(selectors);
+  return getTextBySelectors(selectors) || 'Unknown Brand';
 }
 
 // Extract size
 function extractSize() {
   const selectors = [
-    '[data-testid="listing-size"]',
-    '[data-test-id="listing-size"]',
+    '[data-testid*="size"]',
     '.size-info',
     '.listing-size',
     '.size',
-    '[class*="size"]',
-    '[class*="Size"]'
+    '[class*="size"]'
   ];
   
   let size = getTextBySelectors(selectors);
@@ -128,67 +125,56 @@ function extractSize() {
     // Clean up size text - remove "Size" label and extra whitespace
     size = size.replace(/^Size\s*/i, '').replace(/\s+/g, ' ').trim();
     if (size === 'OS' || size.includes('OS')) {
-      return 'One Size';
+      return 'OS';
     }
   }
-  return size;
+  return size || 'OS';
 }
 
 // Extract category
 function extractCategory() {
   const selectors = [
-    '[data-testid="listing-category"]',
-    '[data-test-id="listing-category"]',
+    '[data-testid*="category"]',
     '.category-info',
     '.breadcrumb',
     '.category',
     'nav a',
-    '[class*="category"]',
-    '[class*="breadcrumb"]'
+    '[class*="category"]'
   ];
   
   let category = getTextBySelectors(selectors);
   if (category) {
-    // Clean up category text and format as breadcrumb
+    // Clean up category text
     category = category.replace(/\s+/g, ' ').trim();
-    category = category.replace(/\n\s+/g, ' > ');
     return category;
   }
-  return null;
+  return 'Home';
 }
 
 // Extract condition
 function extractCondition() {
   const selectors = [
-    '[data-testid="listing-condition"]',
-    '[data-test-id="listing-condition"]',
     '[data-testid*="condition"]',
-    '[data-test-id*="condition"]',
     '.condition',
     '.item-condition',
     '.listing-condition',
-    '[class*="condition"]',
-    '[class*="Condition"]'
+    '[class*="condition"]'
   ];
   
-  return getTextBySelectors(selectors);
+  return getTextBySelectors(selectors) || 'NWT';
 }
 
 // Extract description
 function extractDescription() {
   const selectors = [
-    '[data-testid="listing-description"]',
-    '[data-test-id="listing-description"]',
     '[data-testid*="description"]',
-    '[data-test-id*="description"]',
     '.description',
     '.listing-description',
     '.product-description',
-    '[class*="description"]',
-    '[class*="Description"]'
+    '[class*="description"]'
   ];
   
-  return getTextBySelectors(selectors);
+  return getTextBySelectors(selectors) || '';
 }
 
 // Extract images
@@ -197,27 +183,32 @@ function extractImages() {
   
   // Try different selectors for images
   const imageSelectors = [
-    '[data-testid*="image"] img',
-    '[data-test-id*="image"] img',
+    'img[src*="cloudfront"]',
+    'img[src*="poshmark"]',
     '.listing-images img',
     '.product-images img',
     '.gallery img',
     '[class*="image"] img',
-    '[class*="photo"] img',
-    'img[src*="cloudfront"]',
-    'img[src*="poshmark"]'
+    'img'
   ];
   
   imageSelectors.forEach(selector => {
     try {
       const imgs = document.querySelectorAll(selector);
       imgs.forEach(img => {
-        if (img.src && img.src.includes('cloudfront')) {
-          // Get high-res version by removing size parameters
+        if (img.src && img.src.includes('/posts/')) {
+          // Only grab images that contain "/posts/" - these are the actual listing images
           let src = img.src;
-          // Remove size parameters to get full resolution
+          
+          // Get high-res version by removing size parameters
           src = src.replace(/\/s_\d+x\d+/, '');
-          src = src.replace(/\/m_/, '/m_wp_');
+          
+          // Ensure we get the full quality version
+          if (src.includes('/m_') && !src.includes('/m_wp_')) {
+            src = src.replace('/m_', '/m_wp_');
+          }
+          
+          // Remove any duplicate entries
           if (!images.includes(src)) {
             images.push(src);
           }
@@ -228,6 +219,10 @@ function extractImages() {
     }
   });
   
+  // Sort images to ensure consistent ordering
+  images.sort();
+  
+  console.log(`Found ${images.length} listing images`);
   return images;
 }
 
@@ -237,45 +232,21 @@ function extractSellerInfo() {
   
   // Try multiple approaches for seller name
   const nameSelectors = [
-    '[data-testid="seller-name"]',
-    '[data-test-id="seller-name"]',
-    '[data-testid="seller-username"]',
-    '[data-test-id="seller-username"]', 
+    '[data-testid*="seller"]',
     '.seller-name',
     '.username',
-    '.seller-info .name',
-    '[class*="seller"] [class*="name"]',
-    '[class*="user"] [class*="name"]',
-    'a[href*="/closet/"]', // Poshmark closet links
-    '.seller-card .name',
-    '.profile-name'
+    'a[href*="/closet/"]'
   ];
   
   let sellerName = getTextBySelectors(nameSelectors);
   if (sellerName) {
-    // Clean seller name
     sellerName = sellerName.replace(/^@/, '').trim();
     seller.name = sellerName;
+  } else {
+    seller.name = null;
   }
 
-  // Try to find seller rating
-  const ratingSelectors = [
-    '.seller-rating',
-    '.rating',
-    '[data-testid="seller-rating"]',
-    '[data-test-id="seller-rating"]',
-    '[class*="rating"]',
-    '.stars',
-    '[class*="star"]'
-  ];
-  
-  let rating = getTextBySelectors(ratingSelectors);
-  if (rating) {
-    // Extract numeric rating
-    const ratingMatch = rating.match(/(\d+(?:\.\d+)?)/);
-    seller.rating = ratingMatch ? ratingMatch[1] : rating.trim();
-  }
-
+  seller.rating = null; // Hard to extract reliably
   return seller;
 }
 
@@ -283,46 +254,16 @@ function extractSellerInfo() {
 function extractStats() {
   const stats = {};
   
-  // Better selectors for likes
-  const likeSelectors = [
-    '[data-testid="like-count"]',
-    '[data-test-id="like-count"]',
-    '[data-testid*="like"]',
-    '[data-test-id*="like"]',
-    '.like-count',
-    '.likes',
-    '[class*="like"]',
-    'button[class*="like"] + span',
-    'svg[class*="heart"] + span',
-    '[aria-label*="like"]'
-  ];
+  // Look for likes and comments - these are hard to extract reliably
+  // so we'll set them to null for now
+  stats.likes = null;
   
-  let likes = getTextBySelectors(likeSelectors);
-  if (likes) {
-    // Extract just the number
-    const likeMatch = likes.match(/(\d+)/);
-    stats.likes = likeMatch ? likeMatch[1] : likes.trim();
-  }
-
-  // Better selectors for comments
-  const commentSelectors = [
-    '[data-testid="comment-count"]',
-    '[data-test-id="comment-count"]',
-    '[data-testid*="comment"]',
-    '[data-test-id*="comment"]',
-    '.comment-count',
-    '.comments',
-    '[class*="comment"]',
-    'button[class*="comment"] + span',
-    '[aria-label*="comment"]'
-  ];
-  
-  let comments = getTextBySelectors(commentSelectors);
+  // Try to get comments from the page
+  let comments = getTextBySelectors(['.comments', '[class*="comment"]']);
   if (comments) {
-    // Clean up comment text and extract number
-    comments = comments.replace(/\s+/g, ' ').trim();
-    const commentMatch = comments.match(/(\d+)/);
-    stats.comments = commentMatch ? commentMatch[1] : comments;
+    stats.comments = comments;
+  } else {
+    stats.comments = null;
   }
 
   return stats;
@@ -332,13 +273,10 @@ function extractStats() {
 function extractTags() {
   const tags = [];
   
-  // Look for tags in different places
+  // Look for existing tags in various places
   const tagSelectors = [
-    '[data-testid*="tag"]',
-    '[data-test-id*="tag"]',
     '.tags',
     '.hashtags',
-    '.listing-tags',
     '[class*="tag"]',
     '[class*="badge"]'
   ];
@@ -348,7 +286,7 @@ function extractTags() {
       const elements = document.querySelectorAll(selector);
       elements.forEach(el => {
         const text = el.textContent.trim();
-        if (text && !tags.includes(text)) {
+        if (text && text.length < 50 && !tags.includes(text)) {
           tags.push(text);
         }
       });
@@ -357,7 +295,7 @@ function extractTags() {
     }
   });
   
-  // Also extract tags from description hashtags
+  // Extract hashtags from description
   const description = extractDescription();
   if (description) {
     const hashtagMatches = description.match(/#[\w]+/g);
@@ -369,6 +307,14 @@ function extractTags() {
         }
       });
     }
+  }
+  
+  // Add some default tags based on category/condition
+  const category = extractCategory();
+  const condition = extractCondition();
+  
+  if (condition && !tags.includes(condition)) {
+    tags.push(condition);
   }
   
   return tags;
@@ -386,14 +332,39 @@ function getTextBySelectors(selectors) {
         return text;
       }
     } catch (error) {
-      console.log(`Selector failed: ${selector}`, error);
+      // Silently continue to next selector
     }
   }
   return null;
 }
 
+// Safe download function that doesn't rely on extension APIs
+function downloadJSONFile(data) {
+  try {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `poshmark-listing-${Date.now()}.json`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('Download failed:', error);
+    return false;
+  }
+}
+
 // Create floating extract button
 function createFloatingButton() {
+  // Only create button on valid Poshmark pages
+  if (!isValidPoshmarkPage()) {
+    return;
+  }
+
   // Remove existing button if it exists
   const existingBtn = document.getElementById('poshmark-extractor-btn');
   if (existingBtn) {
@@ -414,38 +385,36 @@ function createFloatingButton() {
       button.classList.add('loading');
       button.innerHTML = `
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2v2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 19.52 2 14h2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+          <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6z"/>
         </svg>
         Extracting...
       `;
       
       const data = extractListingData();
+      const success = downloadJSONFile(data);
       
-      // Download JSON file
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `poshmark-listing-${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      // Show success message
-      showSuccessMessage();
+      if (success) {
+        showSuccessMessage();
+      } else {
+        throw new Error('Download failed');
+      }
       
     } catch (error) {
       console.error('Extraction failed:', error);
-      alert('Extraction failed: ' + error.message);
+      showErrorMessage(error.message);
     } finally {
-      button.classList.remove('loading');
-      button.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-        </svg>
-        Extract
-      `;
+      // Reset button after delay
+      setTimeout(() => {
+        if (button && button.parentNode) {
+          button.classList.remove('loading');
+          button.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Extract
+          `;
+        }
+      }, 1000);
     }
   });
   
@@ -454,45 +423,118 @@ function createFloatingButton() {
 
 // Show success message
 function showSuccessMessage() {
-  const existingMsg = document.getElementById('extraction-success');
-  if (existingMsg) {
-    existingMsg.remove();
-  }
-
+  removeExistingMessages();
+  
   const message = document.createElement('div');
   message.id = 'extraction-success';
   message.textContent = '✓ Data extracted and downloaded!';
+  message.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10001;
+    background: #4caf50;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  `;
+  
   document.body.appendChild(message);
   
   setTimeout(() => {
-    if (message.parentNode) {
+    if (message && message.parentNode) {
       message.parentNode.removeChild(message);
     }
   }, 3000);
 }
 
-// Listen for messages from popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Content script received message:', message);
+// Show error message
+function showErrorMessage(errorText) {
+  removeExistingMessages();
   
-  if (message.action === 'extractData') {
-    try {
-      const data = extractListingData();
-      sendResponse({ success: true, data: data });
-    } catch (error) {
-      console.error('Extraction error:', error);
-      sendResponse({ success: false, error: error.message });
+  const message = document.createElement('div');
+  message.id = 'extraction-error';
+  message.textContent = '❌ Error: ' + errorText;
+  message.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10001;
+    background: #f44336;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+  `;
+  
+  document.body.appendChild(message);
+  
+  setTimeout(() => {
+    if (message && message.parentNode) {
+      message.parentNode.removeChild(message);
     }
-  }
-  
-  return true; // Keep message channel open for async response
-});
-
-// Initialize when page loads
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', createFloatingButton);
-} else {
-  createFloatingButton();
+  }, 5000);
 }
 
-console.log('Poshmark content script initialized');
+// Remove existing messages
+function removeExistingMessages() {
+  const existingSuccess = document.getElementById('extraction-success');
+  const existingError = document.getElementById('extraction-error');
+  
+  if (existingSuccess) existingSuccess.remove();
+  if (existingError) existingError.remove();
+}
+
+// Listen for messages from popup (with better error handling)
+try {
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      console.log('Content script received message:', message);
+      
+      if (message.action === 'extractData') {
+        try {
+          const data = extractListingData();
+          sendResponse({ success: true, data: data });
+        } catch (error) {
+          console.error('Extraction error:', error);
+          sendResponse({ success: false, error: error.message });
+        }
+      }
+      
+      return true; // Keep message channel open for async response
+    });
+  }
+} catch (error) {
+  console.log('Extension context not available, popup communication disabled');
+}
+
+// Initialize when page loads
+function initializeExtension() {
+  if (isValidPoshmarkPage()) {
+    createFloatingButton();
+    console.log('Poshmark content script initialized');
+  }
+}
+
+// Wait for page to be ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeExtension);
+} else {
+  initializeExtension();
+}
+
+// Re-initialize if the page changes (for SPAs)
+let currentUrl = window.location.href;
+setInterval(() => {
+  if (window.location.href !== currentUrl) {
+    currentUrl = window.location.href;
+    setTimeout(initializeExtension, 1000); // Wait for page to settle
+  }
+}, 1000);

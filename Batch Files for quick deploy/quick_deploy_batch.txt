@@ -1,0 +1,39 @@
+@echo off
+REM File: quick-deploy.bat
+REM Simple deployment script for daily use
+REM Perfect for your wife - minimal messages, maximum simplicity
+
+title Updating Twinfolks Website...
+
+REM Clear screen for clean look
+cls
+
+REM Quick visual feedback
+echo.
+echo   🌟 Updating Twinfolks Website...
+echo.
+
+REM Check for wreaths.json quickly
+if not exist "wreaths.json" (
+    echo   ❌ Please download wreaths.json first!
+    timeout /t 3 >nul
+    exit /b 1
+)
+
+REM Deploy without extra messages
+netlify deploy --prod --dir=. --message="Updated wreaths" >nul 2>&1
+
+REM Show result
+if %errorlevel% equ 0 (
+    echo   ✅ Website Updated Successfully!
+    echo.
+    echo   Your wreaths are now live! 🎉
+) else (
+    echo   ❌ Update Failed
+    echo.
+    echo   Please try again or use deploy-website.bat
+)
+
+echo.
+echo   Press any key to close...
+pause >nul

@@ -1,0 +1,94 @@
+@echo off
+REM File: setup-netlify.bat
+REM One-time setup for Netlify CLI deployment
+REM Place this in your website folder and run once
+
+color 0A
+title Twinfolks Netlify Setup
+
+echo.
+echo ============================================
+echo        TWINFOLKS NETLIFY SETUP
+echo           (One-time setup)
+echo ============================================
+echo.
+
+REM Check if Node.js is installed
+echo [1/5] Checking for Node.js...
+node --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo.
+    echo ❌ ERROR: Node.js not found!
+    echo.
+    echo Please install Node.js first:
+    echo 1. Go to https://nodejs.org
+    echo 2. Download the LTS version
+    echo 3. Install with default settings
+    echo 4. Restart this script
+    echo.
+    pause
+    exit /b 1
+) else (
+    echo ✅ Node.js found!
+)
+
+echo.
+echo [2/5] Installing Netlify CLI...
+echo This may take a few minutes...
+npm install -g netlify-cli
+if %errorlevel% neq 0 (
+    echo ❌ Failed to install Netlify CLI
+    pause
+    exit /b 1
+)
+echo ✅ Netlify CLI installed!
+
+echo.
+echo [3/5] Logging into Netlify...
+echo A browser window will open for login...
+echo Please complete the login process in your browser.
+netlify login
+if %errorlevel% neq 0 (
+    echo ❌ Login failed
+    pause
+    exit /b 1
+)
+echo ✅ Successfully logged in!
+
+echo.
+echo [4/5] Linking this folder to your Netlify site...
+echo Please select your Twinfolks site from the list...
+netlify link
+if %errorlevel% neq 0 (
+    echo ❌ Site linking failed
+    pause
+    exit /b 1
+)
+echo ✅ Site linked successfully!
+
+echo.
+echo [5/5] Testing connection...
+netlify status
+if %errorlevel% neq 0 (
+    echo ⚠️  Status check had issues, but setup may still work
+) else (
+    echo ✅ Connection test successful!
+)
+
+echo.
+echo ============================================
+echo           🎉 SETUP COMPLETE! 🎉
+echo ============================================
+echo.
+echo Next steps:
+echo 1. Use 'deploy-website.bat' to update your site
+echo 2. Download wreaths.json from admin panel
+echo 3. Double-click 'deploy-website.bat'
+echo.
+echo Setup files created:
+echo - deploy-website.bat (full featured)
+echo - quick-deploy.bat (simple version)
+echo.
+echo You can now create desktop shortcuts for easy access!
+echo.
+pause

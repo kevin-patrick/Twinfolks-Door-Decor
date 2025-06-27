@@ -1,0 +1,227 @@
+/*
+ * File: /config/filter-config.json
+ * Purpose: Configurable filter categories and options
+ * 
+ * Instructions for editing:
+ * 1. To add a new filter category, add a new object to the "categories" array
+ * 2. Each category needs: "id", "name", "type", and "options"
+ * 3. The "hashtags" array in each option should match hashtags in your JSON data
+ * 4. Set "enabled": false to temporarily hide a category
+ * 5. "type" can be "checkbox" (multiple selection) or "radio" (single selection)
+ */
+
+{
+  "version": "1.0",
+  "lastUpdated": "2025-06-27",
+  "categories": [
+    {
+      "id": "season",
+      "name": "Season",
+      "type": "checkbox",
+      "enabled": true,
+      "options": [
+        {
+          "id": "winter",
+          "label": "Winter",
+          "hashtags": ["#winter", "#christmas", "#holiday", "#snow", "#winterwreath"]
+        },
+        {
+          "id": "spring",
+          "label": "Spring",
+          "hashtags": ["#spring", "#easter", "#flowers", "#springwreath", "#fresh"]
+        },
+        {
+          "id": "summer",
+          "label": "Summer",
+          "hashtags": ["#summer", "#summerwreath", "#bright", "#sunflower", "#patriotic"]
+        },
+        {
+          "id": "fall",
+          "label": "Fall/Autumn",
+          "hashtags": ["#fall", "#autumn", "#thanksgiving", "#harvest", "#pumpkin", "#fallwreath"]
+        }
+      ]
+    },
+    {
+      "id": "colors",
+      "name": "Primary Colors",
+      "type": "checkbox",
+      "enabled": true,
+      "options": [
+        {
+          "id": "red",
+          "label": "Red",
+          "hashtags": ["#red", "#burgundy", "#crimson"]
+        },
+        {
+          "id": "orange",
+          "label": "Orange",
+          "hashtags": ["#orange", "#burnt", "#tangerine"]
+        },
+        {
+          "id": "yellow",
+          "label": "Yellow",
+          "hashtags": ["#yellow", "#gold", "#sunflower"]
+        },
+        {
+          "id": "green",
+          "label": "Green",
+          "hashtags": ["#green", "#sage", "#forest", "#pine"]
+        },
+        {
+          "id": "blue",
+          "label": "Blue",
+          "hashtags": ["#blue", "#navy", "#teal"]
+        },
+        {
+          "id": "purple",
+          "label": "Purple",
+          "hashtags": ["#purple", "#lavender", "#plum"]
+        },
+        {
+          "id": "pink",
+          "label": "Pink",
+          "hashtags": ["#pink", "#rose", "#blush"]
+        },
+        {
+          "id": "white",
+          "label": "White/Cream",
+          "hashtags": ["#white", "#cream", "#ivory", "#neutral"]
+        },
+        {
+          "id": "brown",
+          "label": "Brown/Natural",
+          "hashtags": ["#brown", "#natural", "#burlap", "#wood"]
+        }
+      ]
+    },
+    {
+      "id": "style",
+      "name": "Style",
+      "type": "checkbox",
+      "enabled": true,
+      "options": [
+        {
+          "id": "rustic",
+          "label": "Rustic",
+          "hashtags": ["#rustic", "#farmhouse", "#country", "#burlap"]
+        },
+        {
+          "id": "elegant",
+          "label": "Elegant",
+          "hashtags": ["#elegant", "#formal", "#sophisticated", "#classy"]
+        },
+        {
+          "id": "modern",
+          "label": "Modern",
+          "hashtags": ["#modern", "#contemporary", "#minimalist", "#clean"]
+        },
+        {
+          "id": "traditional",
+          "label": "Traditional",
+          "hashtags": ["#traditional", "#classic", "#timeless"]
+        },
+        {
+          "id": "whimsical",
+          "label": "Whimsical",
+          "hashtags": ["#whimsical", "#fun", "#playful", "#cute"]
+        }
+      ]
+    },
+    {
+      "id": "size",
+      "name": "Size",
+      "type": "radio",
+      "enabled": true,
+      "options": [
+        {
+          "id": "small",
+          "label": "Small (12-18\")",
+          "hashtags": ["#small", "#12inch", "#14inch", "#16inch", "#18inch"]
+        },
+        {
+          "id": "medium",
+          "label": "Medium (20-24\")",
+          "hashtags": ["#medium", "#20inch", "#22inch", "#24inch"]
+        },
+        {
+          "id": "large",
+          "label": "Large (26\"+)",
+          "hashtags": ["#large", "#26inch", "#28inch", "#30inch", "#32inch"]
+        }
+      ]
+    },
+    {
+      "id": "occasion",
+      "name": "Special Occasions",
+      "type": "checkbox",
+      "enabled": true,
+      "options": [
+        {
+          "id": "wedding",
+          "label": "Wedding",
+          "hashtags": ["#wedding", "#bridal", "#ceremony"]
+        },
+        {
+          "id": "birthday",
+          "label": "Birthday",
+          "hashtags": ["#birthday", "#celebration", "#party"]
+        },
+        {
+          "id": "anniversary",
+          "label": "Anniversary",
+          "hashtags": ["#anniversary", "#love", "#romantic"]
+        },
+        {
+          "id": "housewarming",
+          "label": "Housewarming",
+          "hashtags": ["#housewarming", "#newhome", "#welcome"]
+        },
+        {
+          "id": "memorial",
+          "label": "Memorial",
+          "hashtags": ["#memorial", "#remembrance", "#sympathy"]
+        }
+      ]
+    }
+  ],
+  "sortOptions": [
+    {
+      "id": "featured",
+      "label": "Featured Items",
+      "field": "hashtags",
+      "value": "#featured",
+      "direction": "desc"
+    },
+    {
+      "id": "alphabetical",
+      "label": "Alphabetical (A-Z)",
+      "field": "title",
+      "direction": "asc"
+    },
+    {
+      "id": "alphabetical_desc",
+      "label": "Alphabetical (Z-A)",
+      "field": "title",
+      "direction": "desc"
+    },
+    {
+      "id": "price_low",
+      "label": "Price: Low to High",
+      "field": "price",
+      "direction": "asc"
+    },
+    {
+      "id": "price_high",
+      "label": "Price: High to Low",
+      "field": "price",
+      "direction": "desc"
+    },
+    {
+      "id": "newest",
+      "label": "Newest First",
+      "field": "dateAdded",
+      "direction": "desc"
+    }
+  ]
+}
