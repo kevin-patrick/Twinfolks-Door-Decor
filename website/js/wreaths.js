@@ -7,6 +7,7 @@ let currentWreath = null;
 let currentImageIndex = 0;
 let activeFilters = new Set();
 let currentSort = 'featured';
+let currentSearchTerm = '';
 
 // DOM elements
 const wreathGrid = document.getElementById('wreathGrid');
@@ -16,6 +17,8 @@ const showAvailableOnly = document.getElementById('showAvailableOnly');
 const sortSelect = document.getElementById('sortSelect');
 const filterCategories = document.getElementById('filterCategories');
 const clearAllFilters = document.getElementById('clearAllFilters');
+const searchInput = document.getElementById('searchInput');
+const clearSearch = document.getElementById('clearSearch');
 
 // Mobile sidebar elements
 const mobileFilterToggle = document.getElementById('mobileFilterToggle');
@@ -171,9 +174,12 @@ function handleFilterChange(subcategory, isChecked) {
     updateItemCount();
 }
 
-// Clear all filters
+// Clear all filters and search
 function clearAllFiltersHandler() {
     activeFilters.clear();
+    currentSearchTerm = '';
+    searchInput.value = '';
+    updateClearSearchButton();
     
     // Uncheck all filter checkboxes
     const checkboxes = filterCategories.querySelectorAll('input[type="checkbox"]');
@@ -185,13 +191,38 @@ function clearAllFiltersHandler() {
     updateItemCount();
 }
 
-// Filter wreaths based on active filters
+// Filter wreaths based on active filters and search
 function getFilteredWreaths() {
     let filtered = wreathsData;
 
     // Apply availability filter
     if (showAvailableOnly.checked) {
         filtered = filtered.filter(w => !w.sold);
+    }
+
+    // Apply search filter
+    if (currentSearchTerm.trim()) {
+        const searchTerm = currentSearchTerm.toLowerCase();
+        filtered = filtered.filter(wreath => {
+            // Search in title
+            if (wreath.title && wreath.title.toLowerCase().includes(searchTerm)) {
+                return true;
+            }
+            
+            // Search in description
+            if (wreath.description && wreath.description.toLowerCase().includes(searchTerm)) {
+                return true;
+            }
+            
+            // Search in hashtags
+            if (wreath.hashtags && wreath.hashtags.some(tag => 
+                tag.toLowerCase().includes(searchTerm)
+            )) {
+                return true;
+            }
+            
+            return false;
+        });
     }
 
     // Apply category filters (AND logic)
@@ -485,6 +516,32 @@ function closeMobileSidebar() {
     document.body.style.overflow = 'auto';
 }
 
+// Handle search input
+function handleSearchInput() {
+    currentSearchTerm = searchInput.value;
+    updateClearSearchButton();
+    displayWreaths();
+    updateItemCount();
+}
+
+// Handle clear search
+function handleClearSearch() {
+    currentSearchTerm = '';
+    searchInput.value = '';
+    updateClearSearchButton();
+    displayWreaths();
+    updateItemCount();
+}
+
+// Update clear search button visibility
+function updateClearSearchButton() {
+    if (currentSearchTerm.trim()) {
+        clearSearch.classList.remove('hidden');
+    } else {
+        clearSearch.classList.add('hidden');
+    }
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Filter and sort controls
@@ -565,5 +622,16 @@ function setupEventListeners() {
             // Form will redirect to thank-you.html automatically
             // No need for custom handling
         });
+
+    // Search functionality
+    searchInput.addEventListener('input', handleSearchInput);
+    clearSearch.addEventListener('click', handleClearSearch);
+    
+    // Clear search on escape key
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            handleClearSearch();
+        }
+    });
     }
 }
