@@ -214,6 +214,15 @@ function getFilteredWreaths() {
     return filtered;
 }
 
+// Clean title for proper sorting (handles quotes and punctuation)
+function cleanTitleForSorting(title) {
+    if (!title) return '';
+    // Remove leading quotes, spaces, and other punctuation for sorting
+    return title.toLowerCase()
+        .replace(/^[\s"'`~!@#$%^&*()_+\-=\[\]{}|;:,.<>?/\\]+/, '')
+        .trim();
+}
+
 // Sort wreaths
 function sortWreaths(wreaths, sortBy) {
     const sorted = [...wreaths];
@@ -228,10 +237,18 @@ function sortWreaths(wreaths, sortBy) {
             });
             
         case 'az':
-            return sorted.sort((a, b) => a.title.localeCompare(b.title));
+            return sorted.sort((a, b) => {
+                const cleanA = cleanTitleForSorting(a.title);
+                const cleanB = cleanTitleForSorting(b.title);
+                return cleanA.localeCompare(cleanB);
+            });
             
         case 'za':
-            return sorted.sort((a, b) => b.title.localeCompare(a.title));
+            return sorted.sort((a, b) => {
+                const cleanA = cleanTitleForSorting(a.title);
+                const cleanB = cleanTitleForSorting(b.title);
+                return cleanB.localeCompare(cleanA);
+            });
             
         case 'price-low':
             return sorted.sort((a, b) => (a.localPrice || 0) - (b.localPrice || 0));
