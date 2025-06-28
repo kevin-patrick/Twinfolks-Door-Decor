@@ -1,4 +1,10 @@
-// Admin panel JavaScript for Twinfolks Door Decor
+/* 
+ * Filename: admin.js
+ * Location: website/js/admin.js
+ * Purpose: Enhanced admin panel with featured wreath support
+ */
+
+// Enhanced Admin panel JavaScript for Twinfolks Door Decor
 
 let wreathsData = [];
 let editingWreath = null;
@@ -32,6 +38,7 @@ const addImageBtn = document.getElementById('addImageBtn');
 // Form elements
 const editTitle = document.getElementById('editTitle');
 const editPrice = document.getElementById('editPrice');
+const editFeatured = document.getElementById('editFeatured');
 const editDescription = document.getElementById('editDescription');
 const editHashtags = document.getElementById('editHashtags');
 const editPoshmark = document.getElementById('editPoshmark');
@@ -101,6 +108,13 @@ async function loadWreaths() {
             wreathsData = [];
         } else {
             wreathsData = await response.json();
+            
+            // Add featured field if it doesn't exist (backward compatibility)
+            wreathsData.forEach(wreath => {
+                if (wreath.featured === undefined) {
+                    wreath.featured = false;
+                }
+            });
         }
         displayWreaths();
         updateItemCount();
@@ -122,7 +136,7 @@ function displayWreaths() {
     if (filteredWreaths.length === 0) {
         wreathTableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                     ${wreathsData.length === 0 ? 'No wreaths added yet.' : 'No items match current filter.'}
                 </td>
             </tr>
@@ -151,6 +165,10 @@ function createWreathRow(wreath) {
                    onchange="toggleSold('${wreath.id}')" class="rounded">
         </td>
         <td class="px-4 py-3">
+            <input type="checkbox" ${wreath.featured ? 'checked' : ''} 
+                   onchange="toggleFeatured('${wreath.id}')" class="rounded text-yellow-500 focus:ring-yellow-500">
+        </td>
+        <td class="px-4 py-3">
             <div class="w-16 h-16 bg-gray-100 rounded">
                 ${imageUrl ? `
                     <img src="${imageUrl}" alt="${wreath.title}" 
@@ -162,6 +180,7 @@ function createWreathRow(wreath) {
         <td class="px-4 py-3">
             <div class="font-medium text-sm">${wreath.title}</div>
             <div class="text-xs text-gray-500">Added: ${wreath.dateAdded || 'Unknown'}</div>
+            ${wreath.featured ? '<span class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded mt-1">★ Featured</span>' : ''}
         </td>
         <td class="px-4 py-3">
             <span class="text-sm font-medium">$${wreath.localPrice || 0}</span>
@@ -223,6 +242,17 @@ function toggleSold(wreathId) {
     }
 }
 
+// Toggle featured status
+function toggleFeatured(wreathId) {
+    const wreath = wreathsData.find(w => w.id === wreathId);
+    if (wreath) {
+        wreath.featured = !wreath.featured;
+        saveWreaths();
+        displayWreaths();
+        updateItemCount();
+    }
+}
+
 // Delete wreath
 function deleteWreath(wreathId) {
     if (confirm('Are you sure you want to delete this wreath?')) {
@@ -250,6 +280,7 @@ function addNewWreath() {
         title: "New Wreath",
         localPrice: 0,
         sold: false,
+        featured: false,
         hashtags: [],
         category: "holiday",
         dateAdded: new Date().toISOString().split('T')[0],
@@ -270,6 +301,7 @@ function addNewWreath() {
 function populateEditForm() {
     editTitle.value = editingWreath.title || '';
     editPrice.value = editingWreath.localPrice || 0;
+    editFeatured.checked = editingWreath.featured || false;
     editDescription.value = editingWreath.description || '';
     editHashtags.value = editingWreath.hashtags ? editingWreath.hashtags.join(', ') : '';
     editPoshmark.value = editingWreath.platforms?.poshmark || '';
@@ -355,6 +387,7 @@ function saveEdit() {
     // Update wreath data
     editingWreath.title = editTitle.value.trim();
     editingWreath.localPrice = parseInt(editPrice.value) || 0;
+    editingWreath.featured = editFeatured.checked;
     editingWreath.description = editDescription.value.trim();
     editingWreath.hashtags = editHashtags.value.split(',').map(t => t.trim()).filter(Boolean);
     editingWreath.platforms = {
@@ -444,6 +477,7 @@ function addImportedWreath(data) {
         title: data.title || "Imported Wreath",
         localPrice: 0, // User needs to set this
         sold: false,
+        featured: data.featured || false,
         hashtags: data.tags || data.hashtags || [],
         category: "holiday",
         dateAdded: new Date().toISOString().split('T')[0],
@@ -474,7 +508,9 @@ function updateItemCount() {
         wreathsData : wreathsData.filter(w => !w.sold);
     
     const count = filteredWreaths.length;
-    itemCount.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+    const featuredCount = filteredWreaths.filter(w => w.featured).length;
+    
+    itemCount.innerHTML = `${count} item${count !== 1 ? 's' : ''} <span class="text-yellow-600">(${featuredCount} featured)</span>`;
 }
 
 // Setup event listeners
@@ -525,6 +561,7 @@ function setupEventListeners() {
 
 // Make functions global for onclick handlers
 window.toggleSold = toggleSold;
+window.toggleFeatured = toggleFeatured;
 window.deleteWreath = deleteWreath;
 window.editWreath = editWreath;
 window.removeImage = removeImage;
