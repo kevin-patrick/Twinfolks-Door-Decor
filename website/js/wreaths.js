@@ -1,4 +1,4 @@
-// website/js/wreaths.js - Fixed sorting logic for proper alphabetical ordering
+// website/js/wreaths.js - Fixed sorting to ignore leading quotes and punctuation
 
 let wreathsData = [];
 let currentWreath = null;
@@ -62,6 +62,16 @@ async function loadWreaths() {
     }
 }
 
+// Helper function to clean title for sorting (remove leading punctuation)
+function cleanTitleForSorting(title) {
+    if (!title) return '';
+    
+    // Remove leading quotes, spaces, and other punctuation for sorting
+    return title.toLowerCase()
+                .replace(/^[\s"'`~!@#$%^&*()_+\-=\[\]{}|;:,.<>?/\\]+/, '')
+                .trim();
+}
+
 // Apply filters and sorting
 function getFilteredAndSortedWreaths() {
     let filteredWreaths = [...wreathsData]; // Create a copy to avoid mutating original
@@ -100,15 +110,15 @@ function applySorting(wreaths, sortMethod) {
 
         case 'alphabetical-asc':
             return wreathsCopy.sort((a, b) => {
-                const titleA = (a.title || '').toLowerCase();
-                const titleB = (b.title || '').toLowerCase();
+                const titleA = cleanTitleForSorting(a.title);
+                const titleB = cleanTitleForSorting(b.title);
                 return titleA.localeCompare(titleB);
             });
 
         case 'alphabetical-desc':
             return wreathsCopy.sort((a, b) => {
-                const titleA = (a.title || '').toLowerCase();
-                const titleB = (b.title || '').toLowerCase();
+                const titleA = cleanTitleForSorting(a.title);
+                const titleB = cleanTitleForSorting(b.title);
                 return titleB.localeCompare(titleA);
             });
 
