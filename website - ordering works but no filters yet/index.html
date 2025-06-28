@@ -1,4 +1,4 @@
-<!-- File: website/index.html -->
+<!-- website/index.html - Added sorting dropdown to fix alphabetical ordering -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,128 +107,56 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
-        /* Sidebar styles */
-        .sidebar {
-            transition: transform 0.3s ease;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                z-index: 50;
-                background: white;
-                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            }
-            
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 40;
-            }
-            
-            .sidebar-overlay.open {
-                display: block;
-            }
-        }
     </style>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Twinfolks Door Decor</h1>
-                    <p class="text-gray-600 text-sm">Handcrafted wreaths for every season</p>
-                </div>
-                <!-- Mobile filter toggle -->
-                <button id="mobileFilterToggle" class="md:hidden bg-gray-100 p-2 rounded-md">
-                    <i class="fas fa-filter"></i>
-                    <span class="ml-1 text-sm">Filters</span>
-                </button>
-            </div>
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <h1 class="text-2xl font-bold text-gray-800">Twinfolks Door Decor</h1>
+            <p class="text-gray-600 text-sm">Handcrafted wreaths for every season</p>
         </div>
     </header>
 
-    <!-- Sidebar overlay for mobile -->
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <!-- Main Layout -->
-    <div class="max-w-7xl mx-auto flex">
-        <!-- Sidebar -->
-        <aside id="filterSidebar" class="sidebar w-80 bg-white border-r min-h-screen p-6">
-            <!-- Mobile close button -->
-            <div class="md:hidden flex justify-between items-center mb-4 pb-4 border-b">
-                <h3 class="text-lg font-semibold">Filters & Sort</h3>
-                <button id="closeSidebar" class="p-2">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <!-- Item Count -->
-            <div class="mb-6">
-                <p class="text-lg font-semibold text-gray-800" id="itemCount">Loading...</p>
-            </div>
-
-            <!-- Sort By -->
-            <div class="mb-6">
-                <h3 class="text-sm font-medium text-gray-900 mb-3">Sort By</h3>
-                <select id="sortSelect" class="w-full p-2 border border-gray-300 rounded-md bg-white">
-                    <option value="featured">Featured First</option>
-                    <option value="az">A to Z</option>
-                    <option value="za">Z to A</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="newest">Newest First</option>
-                </select>
-            </div>
-
-            <!-- Show Available Only -->
-            <div class="mb-6">
-                <label class="flex items-center">
-                    <input type="checkbox" id="showAvailableOnly" class="mr-3 h-4 w-4 text-green-600 rounded"> 
-                    <span class="text-sm font-medium text-gray-900">Show Available Only</span>
-                </label>
-            </div>
-
-            <!-- Filter Categories -->
-            <div class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-medium text-gray-900">Filters</h3>
-                    <button id="clearAllFilters" class="text-xs text-blue-600 hover:text-blue-800">Clear All</button>
+    <!-- Filter Bar -->
+    <div class="bg-white border-b">
+        <div class="max-w-6xl mx-auto px-4 py-3">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-filter text-gray-500"></i>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="showAvailableOnly" class="mr-2"> 
+                        <span class="text-sm">Show Available Only</span>
+                    </label>
+                    
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600">Sort by:</label>
+                        <select id="sortSelect" class="text-sm border border-gray-300 rounded px-2 py-1">
+                            <option value="featured">Featured</option>
+                            <option value="alphabetical-asc">A to Z</option>
+                            <option value="alphabetical-desc">Z to A</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
+                        </select>
+                    </div>
                 </div>
-                
-                <div id="filterCategories">
-                    <!-- Filter categories will be loaded here -->
-                </div>
+                <p class="text-sm text-gray-500" id="itemCount">
+                    Loading...
+                </p>
             </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="flex-1 p-6">
-            <div id="wreathGrid" class="wreath-grid">
-                <!-- Wreaths will be loaded here -->
-            </div>
-            
-            <div id="loadingMessage" class="text-center py-8">
-                <p class="text-gray-500">Loading wreaths...</p>
-            </div>
-        </main>
+        </div>
     </div>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-6">
+        <div id="wreathGrid" class="wreath-grid">
+            <!-- Wreaths will be loaded here -->
+        </div>
+        
+        <div id="loadingMessage" class="text-center py-8">
+            <p class="text-gray-500">Loading wreaths...</p>
+        </div>
+    </main>
 
     <!-- Wreath Detail Modal -->
     <div id="wreathModal" class="modal">
@@ -385,7 +313,7 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t mt-12">
-        <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="max-w-6xl mx-auto px-4 py-6">
             <div class="text-center">
                 <p class="text-gray-600 text-sm mb-2">&copy; 2025 Twinfolks Door Decor. All rights reserved.</p>
                 <p class="text-gray-500 text-xs">

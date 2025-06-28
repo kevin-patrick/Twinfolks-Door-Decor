@@ -1,5 +1,4 @@
-// File: website/js/admin.js
-// Admin panel JavaScript for Twinfolks Door Decor with featured wreath support
+// website/js/admin.js - Admin panel JavaScript for Twinfolks Door Decor
 
 let wreathsData = [];
 let editingWreath = null;
@@ -33,6 +32,7 @@ const addImageBtn = document.getElementById('addImageBtn');
 // Form elements
 const editTitle = document.getElementById('editTitle');
 const editPrice = document.getElementById('editPrice');
+const editSold = document.getElementById('editSold');
 const editFeatured = document.getElementById('editFeatured');
 const editDescription = document.getElementById('editDescription');
 const editHashtags = document.getElementById('editHashtags');
@@ -104,12 +104,12 @@ async function loadWreaths() {
         } else {
             wreathsData = await response.json();
             
-            // Add featured field to existing wreaths if missing
-            wreathsData.forEach(wreath => {
-                if (wreath.featured === undefined) {
-                    wreath.featured = false;
-                }
-            });
+            // Ensure all wreaths have required fields
+            wreathsData = wreathsData.map(wreath => ({
+                ...wreath,
+                featured: wreath.featured || false,
+                sold: wreath.sold || false
+            }));
         }
         displayWreaths();
         updateItemCount();
@@ -161,7 +161,7 @@ function createWreathRow(wreath) {
         </td>
         <td class="px-4 py-3">
             <input type="checkbox" ${wreath.featured ? 'checked' : ''} 
-                   onchange="toggleFeatured('${wreath.id}')" class="rounded text-yellow-600">
+                   onchange="toggleFeatured('${wreath.id}')" class="rounded text-yellow-600 focus:ring-yellow-500">
         </td>
         <td class="px-4 py-3">
             <div class="w-16 h-16 bg-gray-100 rounded">
@@ -173,11 +173,9 @@ function createWreathRow(wreath) {
             </div>
         </td>
         <td class="px-4 py-3">
-            <div class="font-medium text-sm flex items-center">
-                ${wreath.title}
-                ${wreath.featured ? '<i class="fas fa-star text-yellow-500 ml-2"></i>' : ''}
-            </div>
+            <div class="font-medium text-sm">${wreath.title}</div>
             <div class="text-xs text-gray-500">Added: ${wreath.dateAdded || 'Unknown'}</div>
+            ${wreath.featured ? '<div class="text-xs text-yellow-600 font-medium">⭐ Featured</div>' : ''}
         </td>
         <td class="px-4 py-3">
             <span class="text-sm font-medium">$${wreath.localPrice || 0}</span>
@@ -298,7 +296,13 @@ function addNewWreath() {
 function populateEditForm() {
     editTitle.value = editingWreath.title || '';
     editPrice.value = editingWreath.localPrice || 0;
-    editFeatured.checked = editingWreath.featured || false;
+    editSold.checked = editingWreath.sold || false;
+    
+    // Handle featured checkbox
+    if (editFeatured) {
+        editFeatured.checked = editingWreath.featured || false;
+    }
+    
     editDescription.value = editingWreath.description || '';
     editHashtags.value = editingWreath.hashtags ? editingWreath.hashtags.join(', ') : '';
     editPoshmark.value = editingWreath.platforms?.poshmark || '';
@@ -384,7 +388,8 @@ function saveEdit() {
     // Update wreath data
     editingWreath.title = editTitle.value.trim();
     editingWreath.localPrice = parseInt(editPrice.value) || 0;
-    editingWreath.featured = editFeatured.checked;
+    editingWreath.sold = editSold.checked;
+    editingWreath.featured = editFeatured ? editFeatured.checked : false;
     editingWreath.description = editDescription.value.trim();
     editingWreath.hashtags = editHashtags.value.split(',').map(t => t.trim()).filter(Boolean);
     editingWreath.platforms = {
@@ -472,9 +477,9 @@ function addImportedWreath(data) {
     const wreath = {
         id: data.url ? data.url.split('-').pop() : Date.now().toString() + Math.random().toString(36).substr(2, 9),
         title: data.title || "Imported Wreath",
-        localPrice: 0, // User needs to set this
-        sold: false,
-        featured: false, // New wreaths are not featured by default
+        localPrice: data.localPrice || 0,
+        sold: data.sold || false,
+        featured: data.featured || false,
         hashtags: data.tags || data.hashtags || [],
         category: "holiday",
         dateAdded: new Date().toISOString().split('T')[0],
@@ -491,8 +496,7 @@ function addImportedWreath(data) {
     // Check if wreath already exists
     const existingIndex = wreathsData.findIndex(w => w.id === wreath.id);
     if (existingIndex >= 0) {
-        // Update existing but preserve featured status
-        wreath.featured = wreathsData[existingIndex].featured;
+        // Update existing
         wreathsData[existingIndex] = wreath;
     } else {
         // Add new
@@ -508,12 +512,7 @@ function updateItemCount() {
     const count = filteredWreaths.length;
     const featuredCount = filteredWreaths.filter(w => w.featured).length;
     
-    let countText = `${count} item${count !== 1 ? 's' : ''}`;
-    if (featuredCount > 0) {
-        countText += ` (${featuredCount} featured)`;
-    }
-    
-    itemCount.textContent = countText;
+    itemCount.innerHTML = `${count} item${count !== 1 ? 's' : ''} ${featuredCount > 0 ? `(${featuredCount} featured)` : ''}`;
 }
 
 // Setup event listeners

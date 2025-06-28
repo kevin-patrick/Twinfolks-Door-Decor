@@ -1,145 +1,90 @@
-{
-  "categories": [
-    {
-      "id": "seasonal",
-      "name": "Seasonal",
-      "subcategories": [
-        {
-          "id": "spring",
-          "name": "Spring",
-          "hashtags": ["spring", "springdecor", "easter", "flowers", "fresh", "magnolia", "daisies", "everydaywreath"]
-        },
-        {
-          "id": "summer",
-          "name": "Summer",
-          "hashtags": ["summer", "summerdecor", "redwhiteandblue", "icecream", "icecreamdecor", "summervibes", "patriotic", "july4th"]
-        },
-        {
-          "id": "fall",
-          "name": "Fall/Autumn",
-          "hashtags": ["fall", "autumn", "thanksgiving", "harvest", "pumpkin", "orange", "leaves", "falldecor"]
-        },
-        {
-          "id": "winter",
-          "name": "Winter",
-          "hashtags": ["winter", "snow", "snowman", "winterdecor", "cold", "cozy"]
-        }
-      ]
-    },
-    {
-      "id": "holidays",
-      "name": "Holidays",
-      "subcategories": [
-        {
-          "id": "christmas",
-          "name": "Christmas",
-          "hashtags": ["christmas", "christmasdecor", "christmaswreath", "grinch", "grinchmas", "grinchvibes", "grinchchristmas", "holidaydecor", "holiday"]
-        },
-        {
-          "id": "halloween",
-          "name": "Halloween",
-          "hashtags": ["halloween", "halloweendecor", "halloweenwreath", "spooky", "creepyhalloween", "scaryhalloween", "beetlejuice", "beetlejuicedecor", "skulldecor", "witchdoctor"]
-        },
-        {
-          "id": "mardigras",
-          "name": "Mardi Gras",
-          "hashtags": ["mardigras", "mardigrasneworleans", "mardigraswreath", "masquerade", "carnival", "peacock", "venetianmask", "nola", "mardigrasglamore", "letthegoodtimesroll"]
-        },
-        {
-          "id": "easter",
-          "name": "Easter",
-          "hashtags": ["easter", "easterdecor", "bunny", "eggs", "pastel", "spring"]
-        },
-        {
-          "id": "valentines",
-          "name": "Valentine's Day",
-          "hashtags": ["valentines", "valentine", "love", "hearts", "red", "pink", "romance"]
-        }
-      ]
-    },
-    {
-      "id": "colors",
-      "name": "By Color",
-      "subcategories": [
-        {
-          "id": "red",
-          "name": "Red",
-          "hashtags": ["red"]
-        },
-        {
-          "id": "green",
-          "name": "Green",
-          "hashtags": ["green"]
-        },
-        {
-          "id": "blue",
-          "name": "Blue",
-          "hashtags": ["blue"]
-        },
-        {
-          "id": "purple",
-          "name": "Purple",
-          "hashtags": ["purple"]
-        },
-        {
-          "id": "white",
-          "name": "White/Cream",
-          "hashtags": ["white", "cream"]
-        },
-        {
-          "id": "black",
-          "name": "Black",
-          "hashtags": ["black"]
-        }
-      ]
-    },
-    {
-      "id": "style",
-      "name": "Style",
-      "subcategories": [
-        {
-          "id": "decomesh",
-          "name": "Deco Mesh",
-          "hashtags": ["decomesh", "decomeshwreath", "mesh"]
-        },
-        {
-          "id": "swags",
-          "name": "Swags & Garland",
-          "hashtags": ["swags", "garland"]
-        },
-        {
-          "id": "everyday",
-          "name": "Everyday",
-          "hashtags": ["everydaywreath", "everyday", "neutral"]
-        }
-      ]
-    }
-  ],
-  "sortOptions": [
-    {
-      "id": "featured",
-      "name": "Featured",
-      "default": true
-    },
-    {
-      "id": "alphabetical-az",
-      "name": "A-Z"
-    },
-    {
-      "id": "alphabetical-za",
-      "name": "Z-A"
-    },
-    {
-      "id": "price-low",
-      "name": "Price: Low to High"
-    },
-    {
-      "id": "price-high",
-      "name": "Price: High to Low"
-    },
-    {
-      "id": "newest",
-      "name": "Newest First"
-    }
-  ]
-}
+[
+  {
+    "name": "By Season & Holiday",
+    "subcategories": [
+      {
+        "name": "Spring",
+        "hashtags": ["spring", "magnolia", "daisies", "everydaywreath"]
+      },
+      {
+        "name": "Summer", 
+        "hashtags": ["summer", "summerdecor", "redwhiteandblue", "icecreamdecor"]
+      },
+      {
+        "name": "Halloween",
+        "hashtags": ["halloween", "halloweendecor", "skulldecor", "beetlejuice", "creepyhalloween", "scaryhalloween"]
+      },
+      {
+        "name": "Christmas",
+        "hashtags": ["christmas", "christmasdecor", "christmaswreath", "grinch", "grinchmas"]
+      },
+      {
+        "name": "Mardi Gras",
+        "hashtags": ["mardigras", "masquerade", "carnival", "venetianmask", "peacock"]
+      }
+    ]
+  },
+  {
+    "name": "By Color",
+    "subcategories": [
+      {
+        "name": "Red",
+        "hashtags": ["red"]
+      },
+      {
+        "name": "Green", 
+        "hashtags": ["green"]
+      },
+      {
+        "name": "Blue",
+        "hashtags": ["blue"]
+      },
+      {
+        "name": "Purple",
+        "hashtags": ["purple"]
+      },
+      {
+        "name": "White & Cream",
+        "hashtags": ["white", "cream"]
+      },
+      {
+        "name": "Black",
+        "hashtags": ["black"]
+      }
+    ]
+  },
+  {
+    "name": "By Type",
+    "subcategories": [
+      {
+        "name": "Wreaths",
+        "hashtags": ["wreaths", "wreath", "halloweenwreath", "christmaswreath", "decomeshwreath"]
+      },
+      {
+        "name": "Swags",
+        "hashtags": ["swags"]
+      },
+      {
+        "name": "Garland",
+        "hashtags": ["garland"]
+      }
+    ]
+  },
+  {
+    "name": "By Style",
+    "subcategories": [
+      {
+        "name": "Deco Mesh",
+        "hashtags": ["decomesh", "decomeshwreath"]
+      },
+      {
+        "name": "Magnolia",
+        "hashtags": ["magnolia"]
+      },
+      {
+        "name": "Everyday",
+        "hashtags": ["everydaywreath", "everyday"]
+      }
+    ]
+  }
+]
