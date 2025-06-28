@@ -1,0 +1,405 @@
+<!-- 
+  Filename: index.html
+  Location: website/index.html
+  Purpose: Enhanced main website with filtering and sorting capabilities
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twinfolks Door Decor - Handcrafted Wreaths</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .wreath-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        @media (max-width: 640px) {
+            .wreath-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: #f3f4f6;
+        }
+        
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        
+        .carousel-btn:hover {
+            background: #f9fafb;
+        }
+        
+        .carousel-btn.prev {
+            left: 10px;
+        }
+        
+        .carousel-btn.next {
+            right: 10px;
+        }
+        
+        .image-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+        }
+        
+        .dot.active {
+            background: white;
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .filter-group:last-child {
+            border-bottom: none;
+        }
+
+        .filters-sidebar {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .filters-sidebar {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <h1 class="text-2xl font-bold text-gray-800">Twinfolks Door Decor</h1>
+            <p class="text-gray-600 text-sm">Handcrafted wreaths for every season</p>
+        </div>
+    </header>
+
+    <!-- Controls Bar -->
+    <div class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center space-x-4">
+                    <button id="toggleFilters" class="lg:hidden flex items-center space-x-2 text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-filter"></i>
+                        <span class="text-sm">Filters</span>
+                    </button>
+                    
+                    <div class="flex items-center space-x-2">
+                        <label for="sortSelect" class="text-sm font-medium text-gray-700">Sort by:</label>
+                        <select id="sortSelect" class="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <button id="clearFiltersBtn" class="hidden text-sm text-blue-600 hover:text-blue-800 underline">
+                        Clear All Filters
+                    </button>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <p class="text-sm text-gray-500" id="itemCount">
+                        Loading...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Filters Sidebar -->
+            <aside class="lg:w-64 flex-shrink-0">
+                <div id="filtersPanel" class="bg-white rounded-lg shadow-sm p-4 sticky top-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Filters</h3>
+                        <button id="mobileCloseFilters" class="lg:hidden text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="filtersContainer" class="filters-sidebar">
+                        <!-- Filter groups will be populated by JavaScript -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Wreaths Grid -->
+            <div class="flex-1">
+                <div id="wreathGrid" class="wreath-grid">
+                    <!-- Wreaths will be loaded here -->
+                </div>
+                
+                <div id="loadingMessage" class="text-center py-8">
+                    <p class="text-gray-500">Loading wreaths...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Wreath Detail Modal -->
+    <div id="wreathModal" class="modal">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="relative">
+                <!-- Close button -->
+                <button id="closeModal" class="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg z-10">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <!-- Image carousel -->
+                <div id="carouselContainer" class="carousel-container">
+                    <img id="carouselImage" class="carousel-image" src="" alt="">
+                    <button id="prevImage" class="carousel-btn prev">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="nextImage" class="carousel-btn next">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <div id="imageDots" class="image-dots"></div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 id="modalTitle" class="text-xl font-bold mb-2"></h2>
+                            <div class="flex items-center space-x-4">
+                                <p id="modalPrice" class="text-2xl font-bold text-green-600"></p>
+                                <p class="text-gray-600">Shipping $10-30</p>
+                            </div>
+                        </div>
+                        <span id="soldBadge" class="bg-red-500 text-white px-3 py-1 text-sm rounded hidden">
+                            SOLD
+                        </span>
+                    </div>
+
+                    <div class="mb-6">
+                        <p id="modalDescription" class="text-gray-700 whitespace-pre-line"></p>
+                    </div>
+
+                    <div class="mb-6">
+                        <div id="modalHashtags" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <button id="orderButton" class="w-full bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700">
+                        Order This Wreath
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Form Modal -->
+    <div id="orderModal" class="modal">
+        <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold">Order This Wreath</h3>
+                    <button id="closeOrderModal" class="text-gray-500">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div id="orderInfo" class="mb-4 p-4 bg-green-50 border border-green-200 rounded">
+                    <h4 class="font-medium text-green-800 mb-1">Ordering:</h4>
+                    <p id="orderTitle" class="font-medium"></p>
+                    <p id="orderPrice" class="text-lg font-bold text-green-600"></p>
+                    <p class="text-sm text-gray-600">Shipping $10-30</p>
+                </div>
+
+                <!-- Netlify Form -->
+                <form name="wreath-orders" method="POST" action="thank-you.html" data-netlify="true" netlify-honeypot="bot-field" class="space-y-4">
+                    <input type="hidden" name="form-name" value="wreath-orders" />
+                    <input type="hidden" name="bot-field" />
+                    <input type="hidden" name="wreath-title" id="formWreathTitle" />
+                    <input type="hidden" name="wreath-price" id="formWreathPrice" />
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Name *</label>
+                        <input type="text" name="customer-name" required class="w-full p-2 border rounded-md" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email *</label>
+                        <input type="email" name="customer-email" required class="w-full p-2 border rounded-md" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Phone</label>
+                        <input type="tel" name="customer-phone" class="w-full p-2 border rounded-md" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Delivery Method *</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="delivery-method" value="pickup" required class="mr-2" />
+                                Local Pickup (Washington County, TX)
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="delivery-method" value="shipping" required class="mr-2" />
+                                Shipping
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Zip Code (for shipping)</label>
+                        <input type="text" name="zip-code" class="w-full p-2 border rounded-md" placeholder="12345" />
+                    </div>
+
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="po-box" class="mr-2" />
+                            <span class="text-sm">PO Box address</span>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Payment Method (check all that work for you)</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="payment-cash" class="mr-2" />
+                                Cash (pickup only)
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="payment-credit" class="mr-2" />
+                                Credit at delivery
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="payment-paypal" class="mr-2" />
+                                PayPal
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="payment-cashapp" class="mr-2" />
+                                CashApp
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Additional Notes</label>
+                        <textarea name="additional-notes" class="w-full p-2 border rounded-md h-20" placeholder="Any special requests or questions..."></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700">
+                        Send Order Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="text-center">
+                <p class="text-gray-600 text-sm mb-2">&copy; 2025 Twinfolks Door Decor. All rights reserved.</p>
+                <p class="text-gray-500 text-xs">
+                    <a href="terms.html" class="hover:text-gray-700">Terms of Service</a> |
+                    <a href="admin.html" class="hover:text-gray-700">Admin</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Filter Toggle Script -->
+    <script>
+        // Handle mobile filter toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleFilters = document.getElementById('toggleFilters');
+            const filtersPanel = document.getElementById('filtersPanel');
+            const mobileCloseFilters = document.getElementById('mobileCloseFilters');
+            
+            if (toggleFilters && filtersPanel) {
+                toggleFilters.addEventListener('click', () => {
+                    filtersPanel.classList.toggle('fixed');
+                    filtersPanel.classList.toggle('inset-0');
+                    filtersPanel.classList.toggle('z-50');
+                    filtersPanel.classList.toggle('bg-white');
+                    filtersPanel.classList.toggle('p-6');
+                    document.body.classList.toggle('overflow-hidden');
+                });
+            }
+            
+            if (mobileCloseFilters && filtersPanel) {
+                mobileCloseFilters.addEventListener('click', () => {
+                    filtersPanel.classList.remove('fixed', 'inset-0', 'z-50', 'bg-white', 'p-6');
+                    document.body.classList.remove('overflow-hidden');
+                });
+            }
+        });
+    </script>
+
+    <script src="js/wreaths.js"></script>
+</body>
+</html>
