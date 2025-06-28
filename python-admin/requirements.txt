@@ -1,0 +1,6 @@
+# File: python-admin/requirements.txt
+# Python dependencies for Twinfolks Wreath Manager
+
+PyQt6==6.6.1
+requests==2.31.0
+PyInstaller==6.3.0
