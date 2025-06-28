@@ -1,26 +1,18 @@
-/* 
- * Filename: wreaths.js
- * Location: website/js/wreaths.js
- * Purpose: Enhanced website JavaScript with filtering, sorting, and category management
- */
-
-// Main website JavaScript for Twinfolks Door Decor - Enhanced Version
+// website/js/wreaths.js - Fixed sorting logic for proper alphabetical ordering
 
 let wreathsData = [];
-let filterConfig = {};
 let currentWreath = null;
 let currentImageIndex = 0;
-let activeFilters = new Set();
-let currentSort = 'featured';
+let currentSort = 'featured'; // Track current sort method
+let currentFilters = []; // Track active filters
 
 // DOM elements
 const wreathGrid = document.getElementById('wreathGrid');
 const loadingMessage = document.getElementById('loadingMessage');
 const itemCount = document.getElementById('itemCount');
 const showAvailableOnly = document.getElementById('showAvailableOnly');
-const filtersContainer = document.getElementById('filtersContainer');
 const sortSelect = document.getElementById('sortSelect');
-const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+const filterSelect = document.getElementById('filterSelect');
 
 // Modal elements
 const wreathModal = document.getElementById('wreathModal');
@@ -50,25 +42,9 @@ const formWreathPrice = document.getElementById('formWreathPrice');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    loadWreaths();
+    setupEventListeners();
 });
-
-async function initializeApp() {
-    try {
-        // Load both wreaths and filter configuration
-        await Promise.all([
-            loadWreaths(),
-            loadFilterConfig()
-        ]);
-        
-        setupFilterUI();
-        setupEventListeners();
-        applyFiltersAndSort();
-    } catch (error) {
-        console.error('Error initializing app:', error);
-        loadingMessage.innerHTML = '<p class="text-red-500">Error loading application. Please refresh the page.</p>';
-    }
-}
 
 // Load wreaths data
 async function loadWreaths() {
@@ -78,190 +54,96 @@ async function loadWreaths() {
             throw new Error('Failed to load wreaths data');
         }
         wreathsData = await response.json();
-        
-        // Add featured field if it doesn't exist (backward compatibility)
-        wreathsData.forEach(wreath => {
-            if (wreath.featured === undefined) {
-                wreath.featured = false;
-            }
-        });
-        
+        displayWreaths();
+        updateItemCount();
     } catch (error) {
         console.error('Error loading wreaths:', error);
-        throw error;
+        loadingMessage.innerHTML = '<p class="text-red-500">Error loading wreaths. Please try again later.</p>';
     }
-}
-
-// Load filter configuration
-async function loadFilterConfig() {
-    try {
-        const response = await fetch('filter-config.json');
-        if (!response.ok) {
-            throw new Error('Failed to load filter configuration');
-        }
-        filterConfig = await response.json();
-    } catch (error) {
-        console.error('Error loading filter config:', error);
-        // Create basic config if file doesn't exist
-        filterConfig = {
-            categories: [],
-            sortOptions: [
-                { id: 'featured', name: 'Featured', default: true },
-                { id: 'alphabetical-az', name: 'A-Z' },
-                { id: 'alphabetical-za', name: 'Z-A' },
-                { id: 'price-low', name: 'Price: Low to High' },
-                { id: 'price-high', name: 'Price: High to Low' }
-            ]
-        };
-    }
-}
-
-// Setup filter UI
-function setupFilterUI() {
-    // Clear existing filters
-    filtersContainer.innerHTML = '';
-    
-    // Create availability filter
-    const availabilityFilter = document.createElement('div');
-    availabilityFilter.className = 'filter-group';
-    availabilityFilter.innerHTML = `
-        <div class="flex items-center space-x-2">
-            <input type="checkbox" id="showAvailableOnly" class="rounded" />
-            <label for="showAvailableOnly" class="text-sm font-medium">Available Only</label>
-        </div>
-    `;
-    filtersContainer.appendChild(availabilityFilter);
-    
-    // Create category filters
-    filterConfig.categories.forEach(category => {
-        const categoryDiv = document.createElement('div');
-        categoryDiv.className = 'filter-group';
-        
-        const categoryHeader = document.createElement('h4');
-        categoryHeader.className = 'text-sm font-semibold text-gray-700 mb-2';
-        categoryHeader.textContent = category.name;
-        categoryDiv.appendChild(categoryHeader);
-        
-        const subcategoriesDiv = document.createElement('div');
-        subcategoriesDiv.className = 'space-y-1';
-        
-        category.subcategories.forEach(subcategory => {
-            const subcategoryDiv = document.createElement('div');
-            subcategoryDiv.className = 'flex items-center space-x-2';
-            subcategoryDiv.innerHTML = `
-                <input type="checkbox" 
-                       id="filter-${subcategory.id}" 
-                       value="${subcategory.id}"
-                       data-hashtags="${subcategory.hashtags.join(',')}"
-                       class="category-filter rounded" />
-                <label for="filter-${subcategory.id}" class="text-sm">${subcategory.name}</label>
-            `;
-            subcategoriesDiv.appendChild(subcategoryDiv);
-        });
-        
-        categoryDiv.appendChild(subcategoriesDiv);
-        filtersContainer.appendChild(categoryDiv);
-    });
-    
-    // Setup sort dropdown
-    sortSelect.innerHTML = '';
-    filterConfig.sortOptions.forEach(option => {
-        const optionElement = document.createElement('option');
-        optionElement.value = option.id;
-        optionElement.textContent = option.name;
-        if (option.default) {
-            optionElement.selected = true;
-            currentSort = option.id;
-        }
-        sortSelect.appendChild(optionElement);
-    });
 }
 
 // Apply filters and sorting
-function applyFiltersAndSort() {
-    let filteredWreaths = [...wreathsData];
-    
+function getFilteredAndSortedWreaths() {
+    let filteredWreaths = [...wreathsData]; // Create a copy to avoid mutating original
+
     // Apply availability filter
-    const availabilityCheckbox = document.getElementById('showAvailableOnly');
-    if (availabilityCheckbox && availabilityCheckbox.checked) {
+    if (showAvailableOnly && showAvailableOnly.checked) {
         filteredWreaths = filteredWreaths.filter(w => !w.sold);
     }
-    
-    // Apply category filters (AND logic)
-    const categoryFilters = document.querySelectorAll('.category-filter:checked');
-    if (categoryFilters.length > 0) {
-        categoryFilters.forEach(filter => {
-            const hashtags = filter.dataset.hashtags.split(',');
-            filteredWreaths = filteredWreaths.filter(wreath => {
-                if (!wreath.hashtags) return false;
-                return hashtags.some(hashtag => 
-                    wreath.hashtags.some(wreathTag => 
-                        wreathTag.toLowerCase().includes(hashtag.toLowerCase())
-                    )
-                );
-            });
-        });
-    }
-    
+
+    // Apply category filters (if implemented)
+    // This would be where you'd apply hashtag-based filtering
+
     // Apply sorting
-    filteredWreaths = sortWreaths(filteredWreaths, currentSort);
-    
-    // Display results
-    displayWreaths(filteredWreaths);
-    updateItemCount(filteredWreaths.length);
-    updateClearFiltersButton();
+    filteredWreaths = applySorting(filteredWreaths, currentSort);
+
+    return filteredWreaths;
 }
 
-// Sort wreaths based on selected option
-function sortWreaths(wreaths, sortOption) {
-    const sortedWreaths = [...wreaths];
-    
-    switch (sortOption) {
+// Apply sorting logic
+function applySorting(wreaths, sortMethod) {
+    const wreathsCopy = [...wreaths]; // Make a copy to avoid mutating the original
+
+    switch (sortMethod) {
         case 'featured':
-            return sortedWreaths.sort((a, b) => {
-                // Featured items first, then by date added (newest first)
+            // Featured first, then by date added (newest first)
+            return wreathsCopy.sort((a, b) => {
+                // Featured items first
                 if (a.featured && !b.featured) return -1;
                 if (!a.featured && b.featured) return 1;
-                const dateA = new Date(a.dateAdded || '1970-01-01');
-                const dateB = new Date(b.dateAdded || '1970-01-01');
+                
+                // Then by date added (newest first)
+                const dateA = new Date(a.dateAdded || '2025-01-01');
+                const dateB = new Date(b.dateAdded || '2025-01-01');
                 return dateB - dateA;
             });
-            
-        case 'alphabetical-az':
-            return sortedWreaths.sort((a, b) => a.title.localeCompare(b.title));
-            
-        case 'alphabetical-za':
-            return sortedWreaths.sort((a, b) => b.title.localeCompare(a.title));
-            
-        case 'price-low':
-            return sortedWreaths.sort((a, b) => (a.localPrice || 0) - (b.localPrice || 0));
-            
-        case 'price-high':
-            return sortedWreaths.sort((a, b) => (b.localPrice || 0) - (a.localPrice || 0));
-            
-        case 'newest':
-            return sortedWreaths.sort((a, b) => {
-                const dateA = new Date(a.dateAdded || '1970-01-01');
-                const dateB = new Date(b.dateAdded || '1970-01-01');
-                return dateB - dateA;
+
+        case 'alphabetical-asc':
+            return wreathsCopy.sort((a, b) => {
+                const titleA = (a.title || '').toLowerCase();
+                const titleB = (b.title || '').toLowerCase();
+                return titleA.localeCompare(titleB);
             });
-            
+
+        case 'alphabetical-desc':
+            return wreathsCopy.sort((a, b) => {
+                const titleA = (a.title || '').toLowerCase();
+                const titleB = (b.title || '').toLowerCase();
+                return titleB.localeCompare(titleA);
+            });
+
+        case 'price-asc':
+            return wreathsCopy.sort((a, b) => {
+                const priceA = parseFloat(a.localPrice) || 0;
+                const priceB = parseFloat(b.localPrice) || 0;
+                return priceA - priceB;
+            });
+
+        case 'price-desc':
+            return wreathsCopy.sort((a, b) => {
+                const priceA = parseFloat(a.localPrice) || 0;
+                const priceB = parseFloat(b.localPrice) || 0;
+                return priceB - priceA;
+            });
+
         default:
-            return sortedWreaths;
+            return wreathsCopy;
     }
 }
 
 // Display wreaths in grid
-function displayWreaths(wreaths) {
+function displayWreaths() {
+    const filteredWreaths = getFilteredAndSortedWreaths();
+    
     wreathGrid.innerHTML = '';
     
-    if (wreaths.length === 0) {
-        wreathGrid.innerHTML = '<div class="col-span-full text-center py-8"><p class="text-gray-500">No wreaths match your current filters.</p></div>';
+    if (filteredWreaths.length === 0) {
+        wreathGrid.innerHTML = '<div class="col-span-full text-center py-8"><p class="text-gray-500">No wreaths found.</p></div>';
         loadingMessage.style.display = 'none';
         return;
     }
     
-    wreaths.forEach(wreath => {
+    filteredWreaths.forEach(wreath => {
         const wreathCard = createWreathCard(wreath);
         wreathGrid.appendChild(wreathCard);
     });
@@ -277,9 +159,13 @@ function createWreathCard(wreath) {
     
     const imageUrl = wreath.images && wreath.images.length > 0 ? wreath.images[0] : '';
     
+    // Add featured badge
+    const featuredBadge = wreath.featured ? 
+        '<div class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 text-xs rounded z-10">FEATURED</div>' : '';
+    
     card.innerHTML = `
-        ${wreath.sold ? '<div class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded z-10">SOLD</div>' : ''}
-        ${wreath.featured ? '<div class="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded z-10">★ FEATURED</div>' : ''}
+        ${wreath.sold ? '<div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 text-xs rounded z-10">SOLD</div>' : ''}
+        ${featuredBadge}
         <div class="aspect-square bg-gray-100">
             ${imageUrl ? `
                 <img 
@@ -308,41 +194,152 @@ function createWreathCard(wreath) {
     return card;
 }
 
-// Clear all filters
-function clearAllFilters() {
-    // Uncheck all filter checkboxes
-    document.querySelectorAll('.category-filter').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    
-    const availabilityCheckbox = document.getElementById('showAvailableOnly');
-    if (availabilityCheckbox) {
-        availabilityCheckbox.checked = false;
+// Handle sort change
+function handleSortChange() {
+    if (sortSelect) {
+        currentSort = sortSelect.value;
+        displayWreaths();
     }
-    
-    // Reset sort to default
-    const defaultSort = filterConfig.sortOptions.find(option => option.default);
-    if (defaultSort) {
-        currentSort = defaultSort.id;
-        sortSelect.value = defaultSort.id;
-    }
-    
-    // Apply filters
-    applyFiltersAndSort();
 }
 
-// Update clear filters button visibility
-function updateClearFiltersButton() {
-    const hasActiveFilters = document.querySelectorAll('.category-filter:checked').length > 0 ||
-                           document.getElementById('showAvailableOnly')?.checked;
+// Open wreath detail modal
+function openWreathModal(wreath) {
+    currentWreath = wreath;
+    currentImageIndex = 0;
     
-    if (clearFiltersBtn) {
-        clearFiltersBtn.style.display = hasActiveFilters ? 'block' : 'none';
+    // Populate modal content
+    modalTitle.textContent = wreath.title;
+    modalPrice.textContent = `$${wreath.localPrice} Local Pickup`;
+    modalDescription.textContent = wreath.description || '';
+    
+    // Show/hide sold badge
+    if (wreath.sold) {
+        soldBadge.classList.remove('hidden');
+        orderButton.style.display = 'none';
+    } else {
+        soldBadge.classList.add('hidden');
+        orderButton.style.display = 'block';
     }
+    
+    // Populate hashtags
+    modalHashtags.innerHTML = '';
+    if (wreath.hashtags && wreath.hashtags.length > 0) {
+        wreath.hashtags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'bg-gray-100 text-gray-700 px-2 py-1 text-xs rounded';
+            tagElement.textContent = `#${tag}`;
+            modalHashtags.appendChild(tagElement);
+        });
+    }
+    
+    // Setup carousel
+    setupCarousel();
+    
+    // Show modal
+    wreathModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Setup image carousel
+function setupCarousel() {
+    if (!currentWreath.images || currentWreath.images.length === 0) {
+        carouselImage.style.display = 'none';
+        prevImageBtn.style.display = 'none';
+        nextImageBtn.style.display = 'none';
+        imageDots.innerHTML = '';
+        return;
+    }
+    
+    // Show first image
+    carouselImage.src = currentWreath.images[currentImageIndex];
+    carouselImage.style.display = 'block';
+    
+    // Show/hide navigation buttons
+    if (currentWreath.images.length > 1) {
+        prevImageBtn.style.display = 'flex';
+        nextImageBtn.style.display = 'flex';
+        setupImageDots();
+    } else {
+        prevImageBtn.style.display = 'none';
+        nextImageBtn.style.display = 'none';
+        imageDots.innerHTML = '';
+    }
+}
+
+// Setup image dots
+function setupImageDots() {
+    imageDots.innerHTML = '';
+    currentWreath.images.forEach((_, index) => {
+        const dot = document.createElement('button');
+        dot.className = `dot ${index === currentImageIndex ? 'active' : ''}`;
+        dot.onclick = () => setImageIndex(index);
+        imageDots.appendChild(dot);
+    });
+}
+
+// Navigate to specific image
+function setImageIndex(index) {
+    currentImageIndex = index;
+    carouselImage.src = currentWreath.images[currentImageIndex];
+    updateImageDots();
+}
+
+// Update image dots
+function updateImageDots() {
+    const dots = imageDots.querySelectorAll('.dot');
+    dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentImageIndex);
+    });
+}
+
+// Navigate to previous image
+function prevImage() {
+    if (currentWreath.images && currentWreath.images.length > 1) {
+        currentImageIndex = currentImageIndex === 0 ? 
+            currentWreath.images.length - 1 : currentImageIndex - 1;
+        setImageIndex(currentImageIndex);
+    }
+}
+
+// Navigate to next image
+function nextImage() {
+    if (currentWreath.images && currentWreath.images.length > 1) {
+        currentImageIndex = currentImageIndex === currentWreath.images.length - 1 ? 
+            0 : currentImageIndex + 1;
+        setImageIndex(currentImageIndex);
+    }
+}
+
+// Close wreath modal
+function closeWreathModal() {
+    wreathModal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    currentWreath = null;
+}
+
+// Open order modal
+function openOrderModal() {
+    if (!currentWreath) return;
+    
+    // Populate order info
+    orderTitle.textContent = currentWreath.title;
+    orderPrice.textContent = `$${currentWreath.localPrice} Local Pickup`;
+    formWreathTitle.value = currentWreath.title;
+    formWreathPrice.value = currentWreath.localPrice;
+    
+    // Show order modal
+    orderModal.classList.add('active');
+}
+
+// Close order modal
+function closeOrderModalHandler() {
+    orderModal.classList.remove('active');
 }
 
 // Update item count
-function updateItemCount(count) {
+function updateItemCount() {
+    const filteredWreaths = getFilteredAndSortedWreaths();
+    const count = filteredWreaths.length;
     if (itemCount) {
         itemCount.textContent = `${count} wreath${count !== 1 ? 's' : ''}`;
     }
@@ -350,24 +347,17 @@ function updateItemCount(count) {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Filter change events
-    document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('category-filter') || e.target.id === 'showAvailableOnly') {
-            applyFiltersAndSort();
-        }
-    });
-    
-    // Sort change event
-    if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => {
-            currentSort = e.target.value;
-            applyFiltersAndSort();
+    // Filter checkbox
+    if (showAvailableOnly) {
+        showAvailableOnly.addEventListener('change', () => {
+            displayWreaths();
+            updateItemCount();
         });
     }
     
-    // Clear filters button
-    if (clearFiltersBtn) {
-        clearFiltersBtn.addEventListener('click', clearAllFilters);
+    // Sort dropdown
+    if (sortSelect) {
+        sortSelect.addEventListener('change', handleSortChange);
     }
     
     // Modal close buttons
@@ -425,147 +415,13 @@ function setupEventListeners() {
             closeOrderModalHandler();
         }
     });
-}
-
-// Modal and carousel functions (keeping existing functionality)
-function openWreathModal(wreath) {
-    currentWreath = wreath;
-    currentImageIndex = 0;
     
-    // Populate modal content
-    if (modalTitle) modalTitle.textContent = wreath.title;
-    if (modalPrice) modalPrice.textContent = `$${wreath.localPrice} Local Pickup`;
-    if (modalDescription) modalDescription.textContent = wreath.description || '';
-    
-    // Show/hide sold badge
-    if (wreath.sold) {
-        if (soldBadge) soldBadge.classList.remove('hidden');
-        if (orderButton) orderButton.style.display = 'none';
-    } else {
-        if (soldBadge) soldBadge.classList.add('hidden');
-        if (orderButton) orderButton.style.display = 'block';
-    }
-    
-    // Populate hashtags
-    if (modalHashtags) {
-        modalHashtags.innerHTML = '';
-        if (wreath.hashtags && wreath.hashtags.length > 0) {
-            wreath.hashtags.forEach(tag => {
-                const tagElement = document.createElement('span');
-                tagElement.className = 'bg-gray-100 text-gray-700 px-2 py-1 text-xs rounded';
-                tagElement.textContent = `#${tag}`;
-                modalHashtags.appendChild(tagElement);
-            });
-        }
-    }
-    
-    // Setup carousel
-    setupCarousel();
-    
-    // Show modal
-    if (wreathModal) {
-        wreathModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function setupCarousel() {
-    if (!currentWreath.images || currentWreath.images.length === 0) {
-        if (carouselImage) carouselImage.style.display = 'none';
-        if (prevImageBtn) prevImageBtn.style.display = 'none';
-        if (nextImageBtn) nextImageBtn.style.display = 'none';
-        if (imageDots) imageDots.innerHTML = '';
-        return;
-    }
-    
-    // Show first image
-    if (carouselImage) {
-        carouselImage.src = currentWreath.images[currentImageIndex];
-        carouselImage.style.display = 'block';
-    }
-    
-    // Show/hide navigation buttons
-    if (currentWreath.images.length > 1) {
-        if (prevImageBtn) prevImageBtn.style.display = 'flex';
-        if (nextImageBtn) nextImageBtn.style.display = 'flex';
-        setupImageDots();
-    } else {
-        if (prevImageBtn) prevImageBtn.style.display = 'none';
-        if (nextImageBtn) nextImageBtn.style.display = 'none';
-        if (imageDots) imageDots.innerHTML = '';
-    }
-}
-
-function setupImageDots() {
-    if (!imageDots) return;
-    
-    imageDots.innerHTML = '';
-    currentWreath.images.forEach((_, index) => {
-        const dot = document.createElement('button');
-        dot.className = `dot ${index === currentImageIndex ? 'active' : ''}`;
-        dot.onclick = () => setImageIndex(index);
-        imageDots.appendChild(dot);
-    });
-}
-
-function setImageIndex(index) {
-    currentImageIndex = index;
-    if (carouselImage) {
-        carouselImage.src = currentWreath.images[currentImageIndex];
-    }
-    updateImageDots();
-}
-
-function updateImageDots() {
-    if (!imageDots) return;
-    
-    const dots = imageDots.querySelectorAll('.dot');
-    dots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentImageIndex);
-    });
-}
-
-function prevImage() {
-    if (currentWreath.images && currentWreath.images.length > 1) {
-        currentImageIndex = currentImageIndex === 0 ? 
-            currentWreath.images.length - 1 : currentImageIndex - 1;
-        setImageIndex(currentImageIndex);
-    }
-}
-
-function nextImage() {
-    if (currentWreath.images && currentWreath.images.length > 1) {
-        currentImageIndex = currentImageIndex === currentWreath.images.length - 1 ? 
-            0 : currentImageIndex + 1;
-        setImageIndex(currentImageIndex);
-    }
-}
-
-function closeWreathModal() {
-    if (wreathModal) {
-        wreathModal.classList.remove('active');
-        document.body.style.overflow = 'auto';
-        currentWreath = null;
-    }
-}
-
-function openOrderModal() {
-    if (!currentWreath) return;
-    
-    // Populate order info
-    if (orderTitle) orderTitle.textContent = currentWreath.title;
-    if (orderPrice) orderPrice.textContent = `$${currentWreath.localPrice} Local Pickup`;
-    if (formWreathTitle) formWreathTitle.value = currentWreath.title;
-    if (formWreathPrice) formWreathPrice.value = currentWreath.localPrice;
-    
-    // Show order modal
-    if (orderModal) {
-        orderModal.classList.add('active');
-    }
-}
-
-function closeOrderModalHandler() {
-    if (orderModal) {
-        orderModal.classList.remove('active');
+    // Form submission handling
+    const orderForm = document.querySelector('form[name="wreath-orders"]');
+    if (orderForm) {
+        orderForm.addEventListener('submit', (e) => {
+            // Form will redirect to thank-you.html automatically
+            // No need for custom handling
+        });
     }
 }

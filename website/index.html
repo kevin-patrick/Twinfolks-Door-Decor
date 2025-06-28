@@ -1,8 +1,4 @@
-<!-- 
-  Filename: index.html
-  Location: website/index.html
-  Purpose: Enhanced main website with filtering and sorting capabilities
--->
+<!-- website/index.html - Added sorting dropdown to fix alphabetical ordering -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,98 +107,54 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
-        .filter-group {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .filter-group:last-child {
-            border-bottom: none;
-        }
-
-        .filters-sidebar {
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        @media (max-width: 1024px) {
-            .filters-sidebar {
-                max-height: none;
-            }
-        }
     </style>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="max-w-6xl mx-auto px-4 py-4">
             <h1 class="text-2xl font-bold text-gray-800">Twinfolks Door Decor</h1>
             <p class="text-gray-600 text-sm">Handcrafted wreaths for every season</p>
         </div>
     </header>
 
-    <!-- Controls Bar -->
+    <!-- Filter Bar -->
     <div class="bg-white border-b">
-        <div class="max-w-7xl mx-auto px-4 py-3">
+        <div class="max-w-6xl mx-auto px-4 py-3">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="flex items-center space-x-4">
-                    <button id="toggleFilters" class="lg:hidden flex items-center space-x-2 text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-filter"></i>
-                        <span class="text-sm">Filters</span>
-                    </button>
+                    <i class="fas fa-filter text-gray-500"></i>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="showAvailableOnly" class="mr-2"> 
+                        <span class="text-sm">Show Available Only</span>
+                    </label>
                     
                     <div class="flex items-center space-x-2">
-                        <label for="sortSelect" class="text-sm font-medium text-gray-700">Sort by:</label>
-                        <select id="sortSelect" class="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white">
-                            <!-- Options will be populated by JavaScript -->
+                        <label class="text-sm text-gray-600">Sort by:</label>
+                        <select id="sortSelect" class="text-sm border border-gray-300 rounded px-2 py-1">
+                            <option value="featured">Featured</option>
+                            <option value="alphabetical-asc">A to Z</option>
+                            <option value="alphabetical-desc">Z to A</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
                         </select>
                     </div>
-                    
-                    <button id="clearFiltersBtn" class="hidden text-sm text-blue-600 hover:text-blue-800 underline">
-                        Clear All Filters
-                    </button>
                 </div>
-
-                <div class="flex items-center space-x-4">
-                    <p class="text-sm text-gray-500" id="itemCount">
-                        Loading...
-                    </p>
-                </div>
+                <p class="text-sm text-gray-500" id="itemCount">
+                    Loading...
+                </p>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <div class="flex flex-col lg:flex-row gap-6">
-            <!-- Filters Sidebar -->
-            <aside class="lg:w-64 flex-shrink-0">
-                <div id="filtersPanel" class="bg-white rounded-lg shadow-sm p-4 sticky top-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800">Filters</h3>
-                        <button id="mobileCloseFilters" class="lg:hidden text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    
-                    <div id="filtersContainer" class="filters-sidebar">
-                        <!-- Filter groups will be populated by JavaScript -->
-                    </div>
-                </div>
-            </aside>
-
-            <!-- Wreaths Grid -->
-            <div class="flex-1">
-                <div id="wreathGrid" class="wreath-grid">
-                    <!-- Wreaths will be loaded here -->
-                </div>
-                
-                <div id="loadingMessage" class="text-center py-8">
-                    <p class="text-gray-500">Loading wreaths...</p>
-                </div>
-            </div>
+    <main class="max-w-6xl mx-auto px-4 py-6">
+        <div id="wreathGrid" class="wreath-grid">
+            <!-- Wreaths will be loaded here -->
+        </div>
+        
+        <div id="loadingMessage" class="text-center py-8">
+            <p class="text-gray-500">Loading wreaths...</p>
         </div>
     </main>
 
@@ -361,7 +313,7 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t mt-12">
-        <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="max-w-6xl mx-auto px-4 py-6">
             <div class="text-center">
                 <p class="text-gray-600 text-sm mb-2">&copy; 2025 Twinfolks Door Decor. All rights reserved.</p>
                 <p class="text-gray-500 text-xs">
@@ -371,34 +323,6 @@
             </div>
         </div>
     </footer>
-
-    <!-- Mobile Filter Toggle Script -->
-    <script>
-        // Handle mobile filter toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleFilters = document.getElementById('toggleFilters');
-            const filtersPanel = document.getElementById('filtersPanel');
-            const mobileCloseFilters = document.getElementById('mobileCloseFilters');
-            
-            if (toggleFilters && filtersPanel) {
-                toggleFilters.addEventListener('click', () => {
-                    filtersPanel.classList.toggle('fixed');
-                    filtersPanel.classList.toggle('inset-0');
-                    filtersPanel.classList.toggle('z-50');
-                    filtersPanel.classList.toggle('bg-white');
-                    filtersPanel.classList.toggle('p-6');
-                    document.body.classList.toggle('overflow-hidden');
-                });
-            }
-            
-            if (mobileCloseFilters && filtersPanel) {
-                mobileCloseFilters.addEventListener('click', () => {
-                    filtersPanel.classList.remove('fixed', 'inset-0', 'z-50', 'bg-white', 'p-6');
-                    document.body.classList.remove('overflow-hidden');
-                });
-            }
-        });
-    </script>
 
     <script src="js/wreaths.js"></script>
 </body>
